@@ -95,6 +95,16 @@
   }
   .hof-strip b{ color: var(--cream); }
 
+  .participants-box{
+    display:flex; align-items:center; gap:8px; flex-wrap:wrap; justify-content:center;
+    background: var(--surface-2); border:1px solid var(--line); border-radius: 999px;
+    padding:8px 16px; font-size:12.5px; color: var(--muted); margin-bottom:18px; text-align:center;
+  }
+  .participants-box b{ color: var(--cyan); }
+  .participant-pill{
+    background: var(--surface); border-radius:999px; padding:2px 10px; font-size:11.5px; color: var(--cream);
+  }
+
   .mode-cards{ display:flex; flex-direction:column; gap:10px; margin-bottom:18px; }
   .mode-card{
     display:flex; align-items:center; gap:14px; text-align:left; width:100%;
@@ -459,7 +469,8 @@
     <div class="panel" style="text-align:center;">
       <h2>Mitspielen</h2>
       <p class="sub">Gib den Raum-Code ein, den der Host gerade anzeigt.</p>
-      <input type="text" id="join-code-input" placeholder="z.B. 4821" inputmode="numeric" maxlength="4" style="text-align:center; font-size:22px; letter-spacing:0.25em;">
+      <input type="text" id="join-code-input" placeholder="z.B. 4821" inputmode="numeric" maxlength="4" style="text-align:center; font-size:22px; letter-spacing:0.25em; margin-bottom:10px;">
+      <input type="text" id="join-name-input" placeholder="Dein Name" maxlength="20" style="text-align:center;">
       <div class="form-error" id="join-form-error"></div>
       <div class="btn-row" style="margin-top:12px;">
         <button class="btn full" id="join-room-btn">Beitreten</button>
@@ -499,6 +510,10 @@
   <section id="screen-setup" class="screen">
     <button class="back-link" id="setup-back-link" data-back="mode-select" style="display:none;">← Zurück</button>
 
+    <div class="hof-strip" id="setup-room-banner" style="display:none;">
+      📡 Raum-Code: <b id="setup-room-code-value">----</b>
+    </div>
+    <div class="participants-box" id="setup-participants-box" style="display:none;"></div>
 
     <div class="panel">
       <h2><span class="step-badge">1</span> Spielregeln</h2>
@@ -557,6 +572,7 @@
     <div class="hof-strip" id="room-banner" style="display:none;">
       📡 Raum-Code: <b id="room-code-value">----</b> — andere können unter „Mitspielen" beitreten
     </div>
+    <div class="participants-box" id="game-participants-box" style="display:none;"></div>
     <div class="round-header" id="round-header-anim">
       <div class="round-name" id="round-name">Finale</div>
       <div class="match-progress" id="match-progress">Duell 1 von 1</div>
@@ -871,6 +887,7 @@
   document.getElementById('mode-host-btn').addEventListener('click', ()=>{
     state.networked = true;
     document.getElementById('setup-back-link').style.display = 'inline-flex';
+    if(firebaseReady && !state.roomCode){ createFirebaseRoom(); }
     showScreen('setup');
   });
   document.getElementById('mode-offline-btn').addEventListener('click', ()=>{
@@ -880,7 +897,18 @@
   });
   document.querySelectorAll('[data-back]').forEach(btn=>{
     btn.addEventListener('click', ()=>{
-      if(db && state.roomCode){ db.ref('rooms/'+state.roomCode).off(); }
+      if(db && state.roomCode){
+        db.ref('rooms/'+state.roomCode).off();
+        db.ref('rooms/'+state.roomCode+'/remoteVotes').off();
+        db.ref('rooms/'+state.roomCode+'/participants').off();
+      }
+      if(btn.dataset.back === 'landing'){
+        state.roomCode = null;
+        document.getElementById('room-banner').style.display = 'none';
+        document.getElementById('setup-room-banner').style.display = 'none';
+        document.getElementById('setup-participants-box').style.display = 'none';
+        document.getElementById('game-participants-box').style.display = 'none';
+      }
       showScreen(btn.dataset.back);
     });
   });
@@ -890,15 +918,34 @@
 
   function createFirebaseRoom(){
     state.roomCode = generateRoomCode();
-    db.ref('rooms/'+state.roomCode).set({ createdAt: Date.now(), status: 'playing' });
-    document.getElementById('room-banner').style.display = 'flex';
+    db.ref('rooms/'+state.roomCode).set({ createdAt: Date.now(), status: 'setup' });
+
+    ['room-banner','setup-room-banner'].forEach(id=>{ document.getElementById(id).style.display = 'flex'; });
     document.getElementById('room-code-value').textContent = state.roomCode;
+    document.getElementById('setup-room-code-value').textContent = state.roomCode;
+
     db.ref('rooms/'+state.roomCode+'/remoteVotes').on('value', (snap)=>{
       const val = snap.val() || {};
       let a=0, b=0;
       Object.values(val).forEach(v=>{ if(v==='a') a++; else if(v==='b') b++; });
       state.remoteVotesSnapshot = { a, b };
       updateVoteDisplay();
+    });
+
+    db.ref('rooms/'+state.roomCode+'/participants').on('value', (snap)=>{
+      renderParticipants(snap.val() || {});
+    });
+  }
+
+  function renderParticipants(participants){
+    const names = Object.values(participants).map(p=>p.name).filter(Boolean);
+    const html = names.length === 0
+      ? `👥 Noch niemand beigetreten — Code weitergeben!`
+      : `👥 <b>${names.length}</b> verbunden: ` + names.map(n=>`<span class="participant-pill">${escapeHtml(n)}</span>`).join(' ');
+    ['setup-participants-box','game-participants-box'].forEach(id=>{
+      const el = document.getElementById(id);
+      el.style.display = 'flex';
+      el.innerHTML = html;
     });
   }
 
@@ -935,14 +982,19 @@
 
   document.getElementById('join-room-btn').addEventListener('click', ()=>{
     const code = document.getElementById('join-code-input').value.trim();
+    const name = document.getElementById('join-name-input').value.trim();
     const errorEl = document.getElementById('join-form-error');
     errorEl.textContent = '';
     if(!/^[0-9]{4}$/.test(code)){ errorEl.textContent = 'Bitte einen 4-stelligen Code eingeben.'; return; }
+    if(!name){ errorEl.textContent = 'Bitte einen Namen eingeben.'; return; }
     if(!db){ errorEl.textContent = 'Keine Verbindung verfügbar.'; return; }
     db.ref('rooms/'+code).once('value').then(snap=>{
       if(!snap.exists()){ errorEl.textContent = 'Raum nicht gefunden — Code prüfen.'; return; }
       state.roomCode = code;
       voterVotedMatchKey = null;
+      const myRef = db.ref('rooms/'+code+'/participants/'+getVoterId());
+      myRef.set({ name, joinedAt: Date.now() });
+      myRef.onDisconnect().remove();
       showScreen('voter-game');
       db.ref('rooms/'+code).on('value', (snap2)=>{
         const data = snap2.val();
@@ -963,6 +1015,20 @@
       return;
     }
     document.getElementById('voter-ended-msg').style.display = 'none';
+
+    if(data.status === 'setup' || !data.songA){
+      document.getElementById('voter-round-name').textContent = '⏳ Lobby';
+      document.getElementById('voter-match-progress').textContent = 'Der Host bereitet das Turnier gerade vor …';
+      document.getElementById('voter-artist-a').textContent = '–';
+      document.getElementById('voter-title-a').textContent = '';
+      document.getElementById('voter-artist-b').textContent = '–';
+      document.getElementById('voter-title-b').textContent = '';
+      document.getElementById('voter-vote-row').style.display = 'none';
+      document.getElementById('voter-waiting').style.display = 'block';
+      document.getElementById('voter-voted-msg').style.display = 'none';
+      return;
+    }
+
     document.getElementById('voter-round-name').textContent = data.roundName || '–';
     document.getElementById('voter-match-progress').textContent = data.matchProgress || '';
     if(data.songA){
@@ -1275,7 +1341,7 @@
   }
 
   // ---------- Tournament flow ----------
-  function beginTournament(freshRoom){
+  function beginTournament(){
     const pool = computeFilteredPool();
     const chosen = shuffle(pool).slice(0, state.bracketSize);
     const round0 = [];
@@ -1287,18 +1353,14 @@
     state.currentMatch = 0;
     state.history = [];
 
-    if(firebaseReady && state.networked){
-      if(freshRoom || !state.roomCode){
-        createFirebaseRoom();
-      } else {
-        db.ref('rooms/'+state.roomCode).update({ status: 'playing', championArtist: null, championTitle: null });
-      }
+    if(firebaseReady && state.networked && state.roomCode){
+      db.ref('rooms/'+state.roomCode).update({ status: 'playing', championArtist: null, championTitle: null });
     }
 
     showScreen('game');
     showMatch();
   }
-  document.getElementById('start-tournament-btn').addEventListener('click', ()=>beginTournament(true));
+  document.getElementById('start-tournament-btn').addEventListener('click', beginTournament);
 
   function totalRoundsFromSize(){ return Math.log2(state.bracketSize); }
 
@@ -1582,10 +1644,12 @@
     showScreen('end');
   }
 
-  document.getElementById('new-tournament-btn').addEventListener('click', ()=>beginTournament(false));
+  document.getElementById('new-tournament-btn').addEventListener('click', beginTournament);
 
   document.getElementById('edit-lib-btn').addEventListener('click', ()=>{
-    document.getElementById('room-banner').style.display = 'none';
+    if(firebaseReady && state.networked && state.roomCode){
+      db.ref('rooms/'+state.roomCode).update({ status: 'setup', songA: null, songB: null });
+    }
     showScreen('setup');
   });
 
