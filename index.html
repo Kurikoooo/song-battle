@@ -66,14 +66,27 @@
   header.hero p{ color: var(--muted); margin:8px 0 0; font-size:14.5px; }
 
   .screen{ display:none; }
-  .screen.active{ display:block; }
+  .screen.active{ display:block; animation: screenIn 0.32s ease; }
+  @keyframes screenIn{
+    from{ opacity:0; transform: translateY(8px); }
+    to{ opacity:1; transform: translateY(0); }
+  }
+  @media (prefers-reduced-motion: reduce){
+    .screen.active{ animation:none; }
+  }
 
   .panel{
     background: var(--surface); border:1px solid var(--line); border-radius: var(--radius-lg);
     padding: 22px; margin-bottom: 18px;
+    box-shadow: 0 12px 30px rgba(0,0,0,0.22);
   }
-  .panel h2{ font-size:18px; margin-bottom:4px; color: var(--cream); }
+  .panel h2{ font-size:18px; margin-bottom:4px; color: var(--cream); display:flex; align-items:center; gap:10px; }
   .panel .sub{ color: var(--muted); font-size:13.5px; margin: 0 0 16px; line-height:1.5; }
+  .step-badge{
+    font-family:'Righteous',sans-serif; font-size:13px; color: var(--bg); background: var(--amber);
+    width:26px; height:26px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center;
+    flex-shrink:0;
+  }
 
   .hof-strip{
     display:flex; align-items:center; justify-content:center; gap:8px; flex-wrap:wrap;
@@ -81,6 +94,21 @@
     padding:9px 16px; font-size:12.5px; color: var(--muted); margin-bottom:18px; text-align:center;
   }
   .hof-strip b{ color: var(--cream); }
+
+  .mode-cards{ display:flex; flex-direction:column; gap:10px; margin-bottom:18px; }
+  .mode-card{
+    display:flex; align-items:center; gap:14px; text-align:left; width:100%;
+    background: var(--surface); border:1.5px solid var(--line); border-radius: var(--radius-md);
+    padding:16px 18px; box-shadow: 0 10px 24px rgba(0,0,0,0.2);
+    transition: transform .15s ease, border-color .15s ease, box-shadow .15s ease;
+  }
+  .mode-card:hover{ transform: translateY(-2px); border-color: var(--amber); box-shadow: 0 14px 30px rgba(0,0,0,0.3); }
+  .mode-card:active{ transform: translateY(0); }
+  .mode-icon{ font-size:28px; flex-shrink:0; width:48px; height:48px; border-radius:14px; background: var(--surface-2); display:flex; align-items:center; justify-content:center; }
+  .mode-text{ flex:1; display:flex; flex-direction:column; gap:2px; min-width:0; }
+  .mode-title{ font-family:'Righteous',sans-serif; font-size:16px; color: var(--cream); }
+  .mode-desc{ font-family:'Manrope',sans-serif; font-size:12.5px; color: var(--muted); line-height:1.4; }
+  .mode-arrow{ font-size:18px; color: var(--amber); flex-shrink:0; }
 
   .back-link{
     background:none; border:none; color: var(--muted); font-family:'Manrope',sans-serif;
@@ -95,12 +123,47 @@
   }
   input[type=text]:focus-visible{ border-color: var(--amber); box-shadow: 0 0 0 3px rgba(255,194,75,0.22); }
 
+  .input-icon-group{ position:relative; }
+  .input-icon-group input[type=text]{ padding-left:38px; }
+  .input-icon{
+    position:absolute; left:11px; top:50%; transform:translateY(-50%);
+    font-size:13px; width:20px; height:20px; border-radius:50%;
+    display:flex; align-items:center; justify-content:center; pointer-events:none;
+  }
+  .input-icon-group.yt .input-icon{ background:#FF3E3E22; color:#FF6B6B; }
+  .input-icon-group.sp .input-icon{ background:#1DB95422; color:#1ED760; }
+
+  .spinner-row{
+    display:flex; align-items:center; gap:8px; color: var(--amber); font-size:13px; font-weight:700;
+    font-family:'Manrope',sans-serif;
+  }
+  .spinner{
+    width:14px; height:14px; border-radius:50%; flex-shrink:0;
+    border:2px solid rgba(255,194,75,0.25); border-top-color: var(--amber);
+  }
+  @media (prefers-reduced-motion: no-preference){ .spinner{ animation: spin 0.7s linear infinite; } }
+  @keyframes spin{ to{ transform: rotate(360deg); } }
+
   .lib-list{ display:flex; flex-direction:column; gap:8px; margin-bottom:16px; }
-  .lib-row{ display:flex; align-items:center; gap:12px; background: var(--surface-2); border-radius: var(--radius-sm); padding:8px; }
-  .lib-row img{ width:60px; height:34px; object-fit:cover; border-radius:6px; background:#111; flex-shrink:0; }
+  .lib-row{
+    display:flex; align-items:flex-start; gap:14px; background: var(--surface-2); border-radius: var(--radius-md);
+    padding:14px; transition: background .15s ease;
+  }
+  .lib-row:hover{ background: #33204a; }
+  .lib-row.just-added{ animation: justAdded 1.1s ease; }
+  @keyframes justAdded{
+    0%{ box-shadow: 0 0 0 2px var(--amber); background: rgba(255,194,75,0.16); }
+    100%{ box-shadow: 0 0 0 0 rgba(255,194,75,0); background: var(--surface-2); }
+  }
+  @media (prefers-reduced-motion: reduce){ .lib-row.just-added{ animation:none; } }
+  .lib-row img{ width:64px; height:64px; object-fit:cover; border-radius:10px; background:#111; flex-shrink:0; margin-top:2px; }
   .lib-row .meta{ flex:1; min-width:0; }
-  .lib-row .artist{ font-weight:800; font-size:14px; }
+  .lib-row .artist{ font-weight:800; font-size:14.5px; }
   .lib-row .title{ color: var(--muted); font-size:12.5px; }
+  .lib-row [contenteditable]{ cursor:text; border-radius:4px; padding:1px 4px; margin:-1px -4px; }
+  .lib-row [contenteditable]:hover{ background: rgba(255,194,75,0.10); }
+  .lib-row [contenteditable]:focus{ background: rgba(255,194,75,0.16); outline:1.5px solid var(--amber); }
+  .lib-row .title[contenteditable]:empty::before{ content: attr(data-placeholder); color: var(--muted); opacity:0.55; }
   .lib-row .cat-badge{
     font-size:10.5px; font-weight:700; color: var(--bg); background: var(--amber);
     padding:2px 8px; border-radius:999px; display:inline-block; margin-top:3px;
@@ -111,7 +174,13 @@
   }
   .platform-badge.yt{ background:#FF3E3E22; color:#FF6B6B; }
   .platform-badge.sp{ background:#1DB95422; color:#1ED760; }
-  .playlist-pills{ display:flex; flex-wrap:wrap; gap:4px; margin-top:4px; }
+  .playlist-pills{ display:flex; flex-wrap:wrap; gap:5px; margin-top:8px; }
+  .lib-controls{ margin-top:8px; padding-top:8px; border-top:1px solid var(--line); }
+  .add-playlist-row{ display:flex; gap:6px; margin-top:6px; }
+  .add-playlist-row input{ font-size:12.5px; padding:7px 9px; }
+  .add-playlist-row button{ flex-shrink:0; padding:7px 13px; font-size:12px; }
+  .lib-row button.del{ background:none; border:none; color: var(--muted); font-size:18px; cursor:pointer; padding:8px; border-radius:8px; flex-shrink:0; align-self:flex-start; }
+  .lib-row button.del:hover{ color: var(--pink); background: rgba(255,62,127,0.14); }
   .playlist-pill{
     font-size:10px; font-weight:700; color: var(--bg); background: var(--amber);
     padding:2px 6px 2px 8px; border-radius:999px; display:inline-flex; align-items:center; gap:4px;
@@ -121,15 +190,10 @@
     cursor:pointer; padding:0; line-height:1; opacity:0.7;
   }
   .playlist-pill button:hover{ opacity:1; }
-  .add-playlist-row{ display:flex; gap:6px; margin-top:6px; }
-  .add-playlist-row input{ font-size:12.5px; padding:6px 8px; }
-  .add-playlist-row button{ flex-shrink:0; padding:6px 12px; font-size:12px; }
-  .lib-row button.del{ background:none; border:none; color: var(--muted); font-size:18px; cursor:pointer; padding:6px 8px; border-radius:8px; flex-shrink:0; }
-  .lib-row button.del:hover{ color: var(--pink); background: rgba(255,62,127,0.14); }
 
   .empty-hint{
-    color: var(--muted); font-size:13.5px; text-align:center; padding:16px 10px;
-    border:1.5px dashed var(--line); border-radius: var(--radius-md); margin-bottom:16px;
+    color: var(--muted); font-size:13.5px; text-align:center; padding:22px 14px;
+    border:1.5px dashed var(--line); border-radius: var(--radius-md); margin-bottom:16px; line-height:1.6;
   }
 
   .add-grid{ display:grid; grid-template-columns: 1fr 1fr; gap:8px; margin-bottom:8px; }
@@ -144,7 +208,7 @@
     background: var(--surface-2); border:1.5px solid var(--line); border-radius: 999px;
     padding:7px 14px; cursor:pointer; transition: all .15s ease;
   }
-  .chip:hover{ border-color: var(--amber); }
+  .chip:hover{ border-color: var(--amber); transform: translateY(-1px); }
   .chip.active{ background: var(--amber); color: var(--bg); border-color: var(--amber); }
   .chip:focus-visible{ outline:2px solid var(--amber); outline-offset:2px; }
 
@@ -152,13 +216,14 @@
   button:focus-visible{ outline: 3px solid var(--amber); outline-offset: 2px; }
   .btn{
     border:none; border-radius: 999px; padding: 13px 22px; font-size:15px; letter-spacing:0.01em;
-    color: var(--bg); background: var(--amber); transition: transform 0.12s ease, filter 0.12s ease;
+    color: var(--bg); background: var(--amber); transition: transform 0.12s ease, filter 0.12s ease, box-shadow .12s ease;
+    box-shadow: 0 8px 20px rgba(255,194,75,0.22);
   }
-  .btn:hover{ filter: brightness(1.08); transform: translateY(-1px); }
+  .btn:hover{ filter: brightness(1.08); transform: translateY(-2px); box-shadow: 0 12px 26px rgba(255,194,75,0.3); }
   .btn:active{ transform: translateY(0); }
-  .btn.secondary{ background: transparent; color: var(--cream); border: 1.5px solid var(--line); }
-  .btn.small{ padding: 9px 16px; font-size:13.5px; background: var(--surface-2); color: var(--cream); border:1px solid var(--line); }
-  .btn:disabled{ opacity:0.4; cursor:not-allowed; filter:none; transform:none; }
+  .btn.secondary{ background: transparent; color: var(--cream); border: 1.5px solid var(--line); box-shadow:none; }
+  .btn.small{ padding: 9px 16px; font-size:13.5px; background: var(--surface-2); color: var(--cream); border:1px solid var(--line); box-shadow:none; }
+  .btn:disabled{ opacity:0.4; cursor:not-allowed; filter:none; transform:none; box-shadow:none; }
   .btn-row{ display:flex; gap:10px; flex-wrap:wrap; justify-content:center; }
   .btn.full{ width:100%; }
   .start-hint{ text-align:center; color: var(--muted); font-size:13px; margin-top:10px; font-family:'Manrope',sans-serif; }
@@ -172,6 +237,12 @@
 
   /* --- Duel arena --- */
   .duel-arena{ max-width:420px; margin:0 auto; }
+  .match-transition{ animation: matchIn 0.45s cubic-bezier(.22,.8,.25,1); }
+  @keyframes matchIn{
+    0%{ opacity:0; transform: translateX(28px) scale(0.97); }
+    100%{ opacity:1; transform: translateX(0) scale(1); }
+  }
+  @media (prefers-reduced-motion: reduce){ .match-transition{ animation:none; } }
   .song-card{
     background: var(--surface); border:2px solid var(--line); padding:20px; text-align:center;
     transition: border-color .2s ease, box-shadow .2s ease; position:relative;
@@ -207,6 +278,15 @@
   }
 
   .vote-section{ margin-top:18px; }
+  .vote-timer{
+    text-align:center; font-family:'Righteous',sans-serif; font-size:28px; color: var(--cyan);
+    margin-bottom:12px; transition: color .2s ease;
+  }
+  .vote-timer.urgent{ color: var(--pink); }
+  @media (prefers-reduced-motion: no-preference){
+    .vote-timer.urgent{ animation: timerPulse 0.6s ease-in-out infinite; }
+  }
+  @keyframes timerPulse{ 0%,100%{ transform:scale(1); } 50%{ transform:scale(1.08); } }
   .vote-row{ display:grid; grid-template-columns:1fr 1fr; gap:12px; }
   .vote-card{ background: var(--surface-2); border:2px solid var(--line); border-radius: var(--radius-md); padding:16px 10px; text-align:center; }
   .vote-card .vc-label{ font-size:12px; color: var(--muted); font-weight:700; margin-bottom:8px; min-height:32px; display:flex; align-items:center; justify-content:center; }
@@ -237,14 +317,41 @@
   .next-row{ display:flex; justify-content:center; margin-top:14px; }
 
   .history-box{ margin-top:22px; }
-  .history-box h3{ font-family:'Manrope'; font-size:13px; color: var(--muted); font-weight:800; text-transform:uppercase; letter-spacing:0.06em; margin-bottom:8px; }
-  .history-list{ display:flex; flex-direction:column; gap:6px; }
-  .history-item{
-    background: var(--surface-2); border-radius: var(--radius-sm); padding:9px 12px;
-    font-size:12.5px; display:flex; justify-content:space-between; gap:10px; align-items:baseline;
+  .history-box h3{ font-family:'Manrope'; font-size:13px; color: var(--muted); font-weight:800; text-transform:uppercase; letter-spacing:0.06em; margin-bottom:10px; }
+
+  .bracket-tree{ display:flex; flex-direction:column; gap:16px; }
+  .bracket-round-title{
+    font-family:'Righteous',sans-serif; font-size:13px; color: var(--amber);
+    text-transform:uppercase; letter-spacing:0.05em; margin-bottom:8px;
   }
-  .history-item .hi-round{ color: var(--muted); flex-shrink:0; }
-  .history-item .hi-winner{ color: var(--amber); font-weight:800; text-align:right; }
+  .bracket-matches{ display:flex; flex-wrap:wrap; gap:8px; }
+  .bracket-match{
+    display:flex; flex-direction:column; gap:3px; background: var(--surface-2);
+    border:1.5px solid var(--line); border-radius: var(--radius-sm); padding:6px; flex:1; min-width:150px;
+    transition: border-color .2s ease, box-shadow .2s ease;
+  }
+  .bracket-match.current{ border-color: var(--amber); box-shadow: 0 0 0 2px rgba(255,194,75,0.25); }
+  @media (prefers-reduced-motion: no-preference){
+    .bracket-match.current{ animation: bracketPulse 1.6s ease-in-out infinite; }
+  }
+  @keyframes bracketPulse{
+    0%,100%{ box-shadow: 0 0 0 2px rgba(255,194,75,0.25); }
+    50%{ box-shadow: 0 0 0 5px rgba(255,194,75,0.12); }
+  }
+  .bracket-slot{
+    display:flex; align-items:center; gap:7px; padding:4px 6px; border-radius:7px; font-size:11.5px;
+    transition: opacity .2s ease;
+  }
+  .bracket-slot img{ width:22px; height:22px; border-radius:5px; object-fit:cover; flex-shrink:0; }
+  .bracket-slot-noimg{
+    width:22px; height:22px; border-radius:5px; background: var(--surface); flex-shrink:0;
+    display:flex; align-items:center; justify-content:center; font-size:11px;
+  }
+  .bracket-slot span{ white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .bracket-slot.tbd{ color: var(--muted); font-style:italic; opacity:0.6; }
+  .bracket-slot.tbd .bracket-slot-noimg{ background:none; }
+  .bracket-slot.winner{ background: rgba(255,194,75,0.16); font-weight:800; color: var(--amber); }
+  .bracket-slot.loser{ opacity:0.4; }
 
   /* --- End screen --- */
   .end-panel{ text-align:center; }
@@ -253,6 +360,32 @@
   .champion-title{ color: var(--muted); font-size:14px; font-style:italic; margin-bottom:14px; }
 
   .footer-note{ text-align:center; color: var(--muted); font-size:12px; margin-top: 22px; }
+
+  /* --- Top navigation --- */
+  .top-nav{
+    display:flex; justify-content:center; gap:8px; margin-bottom:22px; flex-wrap:wrap;
+  }
+  .top-nav button{
+    font-family:'Manrope',sans-serif; font-weight:800; font-size:13.5px;
+    background: var(--surface); border:1.5px solid var(--line); color: var(--muted);
+    padding:9px 18px; border-radius:999px; cursor:pointer; transition: all .15s ease;
+  }
+  .top-nav button:hover{ border-color: var(--amber); color: var(--cream); }
+  .top-nav button.active{ background: var(--amber); color: var(--bg); border-color: var(--amber); }
+  .top-nav button:focus-visible{ outline:2px solid var(--amber); outline-offset:2px; }
+
+  /* --- Hall of Fame page --- */
+  .hof-list{ display:flex; flex-direction:column; gap:10px; }
+  .hof-row{
+    display:flex; align-items:center; gap:14px; background: var(--surface-2);
+    border-radius: var(--radius-md); padding:14px 16px;
+  }
+  .hof-row .rank{ font-family:'Righteous',sans-serif; font-size:20px; color: var(--muted); width:34px; text-align:center; flex-shrink:0; }
+  .hof-row.rank-1 .rank, .hof-row.rank-2 .rank, .hof-row.rank-3 .rank{ font-size:26px; }
+  .hof-row .hof-meta{ flex:1; min-width:0; }
+  .hof-row .hof-artist{ font-family:'Righteous',sans-serif; font-size:16.5px; }
+  .hof-row .hof-title{ color: var(--muted); font-size:12.5px; font-style:italic; }
+  .hof-row .hof-wins{ font-family:'Righteous',sans-serif; font-size:20px; color: var(--amber); flex-shrink:0; }
 </style>
 </head>
 <body>
@@ -264,22 +397,65 @@
     <p>Zwei Songs treten an. Abstimmen, wer gewinnt — bis ein Sieger übrig bleibt.</p>
   </header>
 
+  <nav class="top-nav" id="top-nav">
+    <button id="nav-tournament-btn" class="active">🏠 Turnier</button>
+    <button id="nav-hof-btn">🏆 Turniersieger</button>
+  </nav>
+
+  <!-- TURNIERSIEGER / HALL OF FAME -->
+  <section id="screen-hof" class="screen">
+    <div class="panel">
+      <h2>🏆 Turniersieger</h2>
+      <p class="sub">Alle Songs, die schon mal ein ganzes Turnier gewonnen haben.</p>
+      <div class="hof-list" id="hof-full-list"></div>
+    </div>
+  </section>
+
   <!-- MODE SELECT (only shown when Firebase is configured) -->
-  <section id="screen-mode-select" class="screen">
+  <!-- LANDING (brand new first page, shown when Firebase is configured) -->
+  <section id="screen-landing" class="screen">
     <div class="panel" style="text-align:center;">
-      <h2>Wie möchtet ihr spielen?</h2>
+      <h2 style="justify-content:center;">🎶 Los geht's!</h2>
+      <p class="sub">Neues Spiel starten oder bei einem laufenden mitmachen?</p>
+    </div>
+    <div class="mode-cards">
+      <button class="mode-card" id="landing-create-btn">
+        <span class="mode-icon">🎮</span>
+        <span class="mode-text"><span class="mode-title">Spiel erstellen</span><span class="mode-desc">Regeln festlegen, Songs sammeln und ein neues Turnier starten</span></span>
+        <span class="mode-arrow">→</span>
+      </button>
+      <button class="mode-card" id="landing-join-btn">
+        <span class="mode-icon">🎟️</span>
+        <span class="mode-text"><span class="mode-title">Spiel beitreten</span><span class="mode-desc">Raum-Code eingeben und von deinem Handy abstimmen</span></span>
+        <span class="mode-arrow">→</span>
+      </button>
+    </div>
+  </section>
+
+  <!-- MODE SELECT: online vs offline, only reached via "Spiel erstellen" -->
+  <section id="screen-mode-select" class="screen">
+    <button class="back-link" data-back="landing">← Zurück</button>
+    <div class="panel" style="text-align:center;">
+      <h2 style="justify-content:center;">Wie soll das Turnier laufen?</h2>
       <p class="sub">Alle an einem Handy, oder soll jeder von seinem eigenen mitstimmen?</p>
-      <div class="btn-row" style="flex-direction:column;">
-        <button class="btn full" id="mode-host-btn">🖥️ Host sein (andere stimmen per Handy ab)</button>
-        <button class="btn full secondary" id="mode-join-btn">📱 Mitspielen (Raum-Code eingeben)</button>
-        <button class="btn full secondary" id="mode-offline-btn">📴 Ohne Internet — alle an einem Handy</button>
-      </div>
+    </div>
+    <div class="mode-cards">
+      <button class="mode-card" id="mode-host-btn">
+        <span class="mode-icon">🎤</span>
+        <span class="mode-text"><span class="mode-title">Online</span><span class="mode-desc">Regeln festlegen, Songs sammeln, andere stimmen per Handy ab</span></span>
+        <span class="mode-arrow">→</span>
+      </button>
+      <button class="mode-card" id="mode-offline-btn">
+        <span class="mode-icon">📴</span>
+        <span class="mode-text"><span class="mode-title">Ohne Internet</span><span class="mode-desc">Alle an einem Handy, kein Setup nötig</span></span>
+        <span class="mode-arrow">→</span>
+      </button>
     </div>
   </section>
 
   <!-- JOIN (voter enters room code) -->
   <section id="screen-join" class="screen">
-    <button class="back-link" data-back="mode-select">← Zurück</button>
+    <button class="back-link" data-back="landing">← Zurück</button>
     <div class="panel" style="text-align:center;">
       <h2>Mitspielen</h2>
       <p class="sub">Gib den Raum-Code ein, den der Host gerade anzeigt.</p>
@@ -291,9 +467,10 @@
     </div>
   </section>
 
+
   <!-- VOTER GAME VIEW -->
   <section id="screen-voter-game" class="screen">
-    <button class="back-link" data-back="mode-select">← Verlassen</button>
+    <button class="back-link" data-back="landing">← Verlassen</button>
     <div class="round-header">
       <div class="round-name" id="voter-round-name">–</div>
       <div class="match-progress" id="voter-match-progress"></div>
@@ -323,48 +500,49 @@
     <button class="back-link" id="setup-back-link" data-back="mode-select" style="display:none;">← Zurück</button>
 
 
-    <div class="hof-strip" id="hof-strip"></div>
+    <div class="panel">
+      <h2><span class="step-badge">1</span> Spielregeln</h2>
+      <p class="sub">Erst festlegen, wie groß das Turnier wird und wie lange abgestimmt wird — danach wisst ihr genau, wie viele Songs ihr braucht.</p>
+
+      <span class="field-label">Wie viele Runden?</span>
+      <div class="chip-row" id="size-chips"></div>
+
+      <span class="field-label">Abstimmungszeit</span>
+      <div class="chip-row" id="time-chips"></div>
+
+      <span class="field-label">Playlists</span>
+      <div class="chip-row" id="category-chips"></div>
+    </div>
 
     <div class="panel">
-      <h2>Song-Bibliothek</h2>
-      <p class="sub">YouTube- <b>oder</b> Spotify-Link einfügen — Interpret &amp; Titel werden automatisch geladen, wo möglich (bei YouTube kann's ungenau sein, also kurz prüfen). Mindestens 4 Songs nötig für ein Turnier.</p>
+      <h2><span class="step-badge">2</span> Song-Bibliothek</h2>
+      <p class="sub" id="lib-progress-hint">Nur eins der beiden Felder ausfüllen — Interpret &amp; Titel werden automatisch geladen.</p>
 
       <div id="lib-list" class="lib-list"></div>
       <div id="lib-empty-hint" class="empty-hint" style="display:none;"></div>
 
       <div class="add-grid">
         <div class="full">
-          <span class="field-label">YouTube- oder Spotify-Link *</span>
-          <input type="text" id="new-link" placeholder="https://youtube.com/watch?v=... oder https://open.spotify.com/track/...">
-          <span class="field-label" id="link-fetch-status" style="display:none; color:var(--amber); margin-top:4px;">🔍 Song-Infos werden geladen …</span>
-        </div>
-        <div>
-          <span class="field-label">Interpret *</span>
-          <input type="text" id="new-artist" placeholder="z.B. Linkin Park">
-        </div>
-        <div>
-          <span class="field-label">Songtitel</span>
-          <input type="text" id="new-title" placeholder="z.B. In the End">
+          <span class="field-label">YouTube-Link</span>
+          <div class="input-icon-group yt">
+            <span class="input-icon">▶</span>
+            <input type="text" id="new-youtube-link" placeholder="https://youtube.com/watch?v=...">
+          </div>
         </div>
         <div class="full">
-          <span class="field-label">Playlist(s) (optional, mit Komma trennen)</span>
-          <input type="text" id="new-cat" placeholder="z.B. Linkin Park, 2000er, Favoriten" list="playlist-suggestions">
-          <datalist id="playlist-suggestions"></datalist>
+          <span class="field-label">Spotify-Link</span>
+          <div class="input-icon-group sp">
+            <span class="input-icon">♪</span>
+            <input type="text" id="new-spotify-link" placeholder="https://open.spotify.com/track/...">
+          </div>
         </div>
+        <div class="spinner-row" id="link-fetch-status" style="display:none;"><span class="spinner"></span> Song-Infos werden geladen …</div>
+        <datalist id="playlist-suggestions"></datalist>
       </div>
       <div class="form-error" id="lib-form-error"></div>
       <div class="btn-row" style="justify-content:flex-start;">
         <button class="btn small" id="lib-add-btn">➕ Song hinzufügen</button>
       </div>
-    </div>
-
-    <div class="panel">
-      <h2>Turnier einstellen</h2>
-      <p class="sub">Nur bestimmte Playlists mitspielen lassen? Und wie viele Songs sollen ins Turnier?</p>
-      <span class="field-label">Playlists</span>
-      <div class="chip-row" id="category-chips"></div>
-      <span class="field-label">Turniergröße</span>
-      <div class="chip-row" id="size-chips"></div>
     </div>
 
     <div class="btn-row">
@@ -375,15 +553,16 @@
 
   <!-- GAME -->
   <section id="screen-game" class="screen">
+    <button class="back-link" data-back="landing">🏠 Turnier verlassen</button>
     <div class="hof-strip" id="room-banner" style="display:none;">
       📡 Raum-Code: <b id="room-code-value">----</b> — andere können unter „Mitspielen" beitreten
     </div>
-    <div class="round-header">
+    <div class="round-header" id="round-header-anim">
       <div class="round-name" id="round-name">Finale</div>
       <div class="match-progress" id="match-progress">Duell 1 von 1</div>
     </div>
 
-    <div class="duel-arena">
+    <div class="duel-arena" id="duel-arena-el">
       <div class="song-card top" id="card-a">
         <div class="artist" id="card-a-artist">Artist A</div>
         <div class="title" id="card-a-title"></div>
@@ -407,6 +586,7 @@
     <p class="start-hint" id="spotify-hint" style="display:none;">🟢 Spotify: Play-Button im Player antippen — Autoplay unterstützt Spotify nicht.</p>
 
     <div class="vote-section" id="vote-section" style="display:none;">
+      <div class="vote-timer" id="vote-timer" style="display:none;">⏱ <span id="vote-timer-num">30</span>s</div>
       <div class="vote-row">
         <div class="vote-card left">
           <div class="vc-label" id="vote-label-a">Artist A</div>
@@ -448,8 +628,8 @@
     </div>
 
     <div class="history-box" id="history-box" style="display:none;">
-      <h3>🏆 Turnierverlauf</h3>
-      <div class="history-list" id="history-list"></div>
+      <h3>🏆 Turnierbaum</h3>
+      <div class="bracket-tree" id="bracket-tree"></div>
     </div>
   </section>
 
@@ -462,13 +642,16 @@
       <div class="champion-title" id="champion-title"></div>
 
       <div class="history-box" style="text-align:left;">
-        <h3>Turnierverlauf</h3>
-        <div class="history-list" id="end-history-list"></div>
+        <h3>Turnierbaum</h3>
+        <div class="bracket-tree" id="end-bracket-tree"></div>
       </div>
 
       <div class="btn-row" style="margin-top:16px;">
         <button class="btn" id="new-tournament-btn">🔄 Neues Turnier</button>
         <button class="btn secondary" id="edit-lib-btn">⚙️ Bibliothek bearbeiten</button>
+      </div>
+      <div class="btn-row" style="margin-top:10px;">
+        <button class="back-link" data-back="landing">🏠 Zur Startseite</button>
       </div>
     </div>
   </section>
@@ -488,10 +671,10 @@
 <script src="https://www.gstatic.com/firebasejs/12.15.0/firebase-database-compat.js"></script>
 <script>
   const firebaseConfig = {
-    apiKey: "DEIN_API_KEY",
-    authDomain: "DEIN_PROJEKT.firebaseapp.com",
-    databaseURL: "https://DEIN_PROJEKT-default-rtdb.firebaseio.com",
-    projectId: "DEIN_PROJEKT"
+    apiKey: "AIzaSyA2g7zawHSDIrWt37VPk4To8bxrRvU8mE8",
+    authDomain: "song-battle-a8456.firebaseapp.com",
+    databaseURL: "https://song-battle-a8456-default-rtdb.europe-west1.firebasedatabase.app",
+    projectId: "song-battle-a8456"
   };
   window.__fb = { db: null, ready: false };
   try{
@@ -511,9 +694,7 @@
   const KEY_LIBRARY = 'song-battle-library-v1';
   const KEY_HOF = 'song-duel-hof-v1';
 
-  const SEED_LIBRARY = [
-    { id:'seed-1', artist:'Linkin Park', title:'In the End', videoId:'oIwWqYSbzGA', spotifyId:null, spotifyThumb:null, categories:['Linkin Park'] }
-  ];
+  const SEED_LIBRARY = [];
 
   const ROUND_NAMES_FROM_FINAL = ['Finale','Halbfinale','Viertelfinale','Achtelfinale','Sechzehntelfinale'];
 
@@ -522,6 +703,9 @@
     hallOfFame: {},
     filterCategories: new Set(),
     bracketSize: null,
+    voteTimeLimit: null,
+    voteTimerInterval: null,
+    voteTimeRemaining: null,
     rounds: [],
     results: [],
     currentRound: 0,
@@ -540,6 +724,7 @@
     matchKey: null
   };
   let lastRoomData = null;
+  let lastAddedSongId = null;
   let voterVotedMatchKey = null;
   const firebaseReady = window.__fb && window.__fb.ready;
   const db = window.__fb ? window.__fb.db : null;
@@ -570,15 +755,10 @@
       if(raw) state.hallOfFame = JSON.parse(raw);
     }catch(e){}
 
-    renderHofStrip();
     renderLibraryList();
     refreshFilterAndSizes();
 
-    if(firebaseReady){
-      showScreen('mode-select');
-    } else {
-      showScreen('setup');
-    }
+    goToTournamentHome();
   }
   function saveLibrary(){ try{ localStorage.setItem(KEY_LIBRARY, JSON.stringify(state.library)); }catch(e){} }
   function saveHof(){ try{ localStorage.setItem(KEY_HOF, JSON.stringify(state.hallOfFame)); }catch(e){} }
@@ -639,24 +819,55 @@
   function escapeHtml(str){ const d=document.createElement('div'); d.textContent = str; return d.innerHTML; }
   function songLabel(song){ return song.title ? `${song.artist} – ${song.title}` : song.artist; }
   function hofKey(song){ return (song.artist.trim() + '|' + (song.title||'').trim()).toLowerCase(); }
+  const GAMEPLAY_SCREENS = ['game', 'voter-game', 'end'];
   function showScreen(id){
     document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
     document.getElementById('screen-'+id).classList.add('active');
+
+    const nav = document.getElementById('top-nav');
+    nav.style.display = GAMEPLAY_SCREENS.includes(id) ? 'none' : 'flex';
+    document.getElementById('nav-hof-btn').classList.toggle('active', id === 'hof');
+    document.getElementById('nav-tournament-btn').classList.toggle('active', id !== 'hof' && !GAMEPLAY_SCREENS.includes(id));
   }
 
-  function renderHofStrip(){
-    const el = document.getElementById('hof-strip');
-    const entries = Object.values(state.hallOfFame).sort((a,b)=>b.wins-a.wins).slice(0,3);
+  function goToTournamentHome(){
+    if(firebaseReady) showScreen('landing');
+    else showScreen('setup');
+  }
+
+  function renderFullHofList(){
+    const list = document.getElementById('hof-full-list');
+    const entries = Object.values(state.hallOfFame).sort((a,b)=>b.wins-a.wins);
     if(entries.length === 0){
-      el.innerHTML = `🏆 Noch kein Turnier gespielt — macht den Anfang!`;
-    } else {
-      el.innerHTML = '🏆 Bisherige Turniersieger: ' + entries.map(e =>
-        `<b>${escapeHtml(e.artist)}${e.title ? ' – ' + escapeHtml(e.title) : ''}</b> (${e.wins}×)`
-      ).join(' · ');
+      list.innerHTML = `<p class="start-hint">Noch keine Turniersieger — spielt euer erstes Turnier, dann taucht der Sieger hier auf!</p>`;
+      return;
     }
+    const medals = ['🥇','🥈','🥉'];
+    list.innerHTML = entries.map((e, i) => `
+      <div class="hof-row ${i < 3 ? 'rank-'+(i+1) : ''}">
+        <div class="rank">${medals[i] || (i+1)}</div>
+        <div class="hof-meta">
+          <div class="hof-artist">${escapeHtml(e.artist)}</div>
+          ${e.title ? `<div class="hof-title">${escapeHtml(e.title)}</div>` : ''}
+        </div>
+        <div class="hof-wins">${e.wins}×</div>
+      </div>
+    `).join('');
   }
 
-  // ---------- Mode select / navigation ----------
+  document.getElementById('nav-tournament-btn').addEventListener('click', goToTournamentHome);
+  document.getElementById('nav-hof-btn').addEventListener('click', ()=>{
+    renderFullHofList();
+    showScreen('hof');
+  });
+
+  // ---------- Landing / Mode select / navigation ----------
+  document.getElementById('landing-create-btn').addEventListener('click', ()=>{
+    showScreen('mode-select');
+  });
+  document.getElementById('landing-join-btn').addEventListener('click', ()=>{
+    showScreen('join');
+  });
   document.getElementById('mode-host-btn').addEventListener('click', ()=>{
     state.networked = true;
     document.getElementById('setup-back-link').style.display = 'inline-flex';
@@ -666,9 +877,6 @@
     state.networked = false;
     document.getElementById('setup-back-link').style.display = 'inline-flex';
     showScreen('setup');
-  });
-  document.getElementById('mode-join-btn').addEventListener('click', ()=>{
-    showScreen('join');
   });
   document.querySelectorAll('[data-back]').forEach(btn=>{
     btn.addEventListener('click', ()=>{
@@ -798,7 +1006,7 @@
       emptyHint.style.display = 'none';
       state.library.forEach(item=>{
         const row = document.createElement('div');
-        row.className = 'lib-row';
+        row.className = 'lib-row' + (item.id === lastAddedSongId ? ' just-added' : '');
         const thumb = libThumbSrc(item);
         const platformBadge = item.spotifyId
           ? `<span class="platform-badge sp">🟢 Spotify</span>`
@@ -807,20 +1015,37 @@
           <span class="playlist-pill">${escapeHtml(c)}<button data-remove-pl="${item.id}|${escapeHtml(c)}" title="Aus Playlist entfernen">×</button></span>
         `).join('');
         row.innerHTML = `
-          ${thumb ? `<img src="${thumb}" alt="">` : `<div style="width:60px;height:34px;border-radius:6px;background:var(--surface);display:flex;align-items:center;justify-content:center;flex-shrink:0;">🎵</div>`}
+          ${thumb ? `<img src="${thumb}" alt="">` : `<div style="width:64px;height:64px;border-radius:10px;background:var(--surface);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:22px;">🎵</div>`}
           <div class="meta">
-            <div class="artist">${escapeHtml(item.artist)}</div>
-            ${item.title ? `<div class="title">${escapeHtml(item.title)}</div>` : ''}
+            <div class="artist" contenteditable="true" spellcheck="false" data-edit-field="artist" data-edit-id="${item.id}">${escapeHtml(item.artist)}</div>
+            <div class="title" contenteditable="true" spellcheck="false" data-edit-field="title" data-edit-id="${item.id}" data-placeholder="Titel antippen …">${escapeHtml(item.title || '')}</div>
             <div>${platformBadge}</div>
             <div class="playlist-pills">${pillsHtml}</div>
-            <div class="add-playlist-row">
-              <input type="text" placeholder="+ Playlist" data-add-pl-input="${item.id}" list="playlist-suggestions">
-              <button class="btn small" data-add-pl-btn="${item.id}">+</button>
+            <div class="lib-controls">
+              <div class="add-playlist-row">
+                <input type="text" placeholder="+ Playlist" data-add-pl-input="${item.id}" list="playlist-suggestions">
+                <button class="btn small" data-add-pl-btn="${item.id}">+</button>
+              </div>
             </div>
           </div>
           <button class="del" data-id="${item.id}" title="Entfernen">✕</button>
         `;
         list.appendChild(row);
+      });
+      list.querySelectorAll('[data-edit-field]').forEach(el=>{
+        el.addEventListener('blur', ()=>{
+          const song = state.library.find(s=>s.id===el.dataset.editId);
+          if(!song) return;
+          const newVal = el.textContent.replace(/\s+/g,' ').trim();
+          if(el.dataset.editField === 'artist'){
+            song.artist = newVal || 'Interpret antippen zum Bearbeiten';
+            el.textContent = song.artist;
+          } else {
+            song.title = newVal;
+          }
+          saveLibrary();
+        });
+        el.addEventListener('keydown', (e)=>{ if(e.key==='Enter'){ e.preventDefault(); el.blur(); } });
       });
       list.querySelectorAll('.del').forEach(btn=>{
         btn.addEventListener('click', ()=>{
@@ -856,6 +1081,7 @@
         });
       });
     }
+    lastAddedSongId = null;
   }
 
   function normalizeCategory(input){
@@ -878,87 +1104,64 @@
     datalist.innerHTML = getCategories().map(c=>`<option value="${escapeHtml(c)}">`).join('');
   }
 
-  let linkMetaCache = { link: '', spotifyThumb: null };
-
-  async function autoFillFromLink(){
-    const linkInput = document.getElementById('new-link');
-    const artistInput = document.getElementById('new-artist');
-    const titleInput = document.getElementById('new-title');
-    const statusEl = document.getElementById('link-fetch-status');
-    const link = linkInput.value.trim();
-    if(!link) return;
-    if(artistInput.value.trim() && titleInput.value.trim()) return; // don't overwrite what's already typed
-
-    const ytId = extractYouTubeId(link);
-    const spId = ytId ? null : extractSpotifyTrackId(link);
-    if(!ytId && !spId) return;
-
-    statusEl.style.display = 'inline-block';
-    if(ytId){
-      const meta = await fetchYouTubeMeta(link);
-      if(meta){
-        const parsed = splitArtistTitle(meta.title);
-        if(!artistInput.value.trim()) artistInput.value = parsed.artist || meta.author || '';
-        if(!titleInput.value.trim()) titleInput.value = parsed.title || meta.title || '';
-      }
-    } else if(spId){
-      const meta = await fetchSpotifyMeta(link);
-      if(meta){
-        if(meta.title && !titleInput.value.trim()) titleInput.value = meta.title;
-        if(meta.thumbnail) linkMetaCache = { link, spotifyThumb: meta.thumbnail };
-      }
-    }
-    statusEl.style.display = 'none';
-  }
-  document.getElementById('new-link').addEventListener('blur', autoFillFromLink);
-
   document.getElementById('lib-add-btn').addEventListener('click', async ()=>{
-    const artistInput = document.getElementById('new-artist');
-    const titleInput = document.getElementById('new-title');
-    const linkInput = document.getElementById('new-link');
-    const catInput = document.getElementById('new-cat');
+    const ytInput = document.getElementById('new-youtube-link');
+    const spInput = document.getElementById('new-spotify-link');
     const errorEl = document.getElementById('lib-form-error');
+    const statusEl = document.getElementById('link-fetch-status');
+    const addBtn = document.getElementById('lib-add-btn');
     errorEl.textContent = '';
 
-    const artist = artistInput.value.trim();
-    let title = titleInput.value.trim();
-    const link = linkInput.value.trim();
-    const categories = catInput.value.split(',').map(c=>normalizeCategory(c)).filter(Boolean);
+    const ytLink = ytInput.value.trim();
+    const spLink = spInput.value.trim();
 
-    if(!artist){ errorEl.textContent = 'Bitte einen Interpreten eingeben.'; return; }
+    if(!ytLink && !spLink){ errorEl.textContent = 'Bitte einen YouTube- oder Spotify-Link einfügen.'; return; }
+    if(ytLink && spLink){ errorEl.textContent = 'Bitte nur eins der beiden Felder ausfüllen, nicht beide.'; return; }
 
-    const videoId = extractYouTubeId(link);
-    const spotifyId = videoId ? null : extractSpotifyTrackId(link);
-
-    if(!videoId && !spotifyId){
-      errorEl.textContent = 'Kein gültiger YouTube- oder Spotify-Link erkannt.';
-      return;
+    let videoId = null, spotifyId = null;
+    if(ytLink){
+      videoId = extractYouTubeId(ytLink);
+      if(!videoId){ errorEl.textContent = 'Das sieht nicht nach einem gültigen YouTube-Link aus.'; return; }
+    } else {
+      spotifyId = extractSpotifyTrackId(spLink);
+      if(!spotifyId){ errorEl.textContent = 'Das sieht nicht nach einem gültigen Spotify-Link aus.'; return; }
     }
 
-    let spotifyThumb = null;
-    if(spotifyId){
-      if(linkMetaCache.link === link && linkMetaCache.spotifyThumb){
-        spotifyThumb = linkMetaCache.spotifyThumb;
-      } else {
-        const addBtn = document.getElementById('lib-add-btn');
-        addBtn.disabled = true; addBtn.textContent = '⏳ Lade Song-Infos …';
-        const meta = await fetchSpotifyMeta(link);
-        if(meta){
-          if(meta.thumbnail) spotifyThumb = meta.thumbnail;
-          if(meta.title && !title) title = meta.title;
-        }
-        addBtn.disabled = false; addBtn.textContent = '➕ Song hinzufügen';
+    addBtn.disabled = true; addBtn.textContent = '⏳ Lade Song-Infos …';
+    statusEl.style.display = 'flex';
+
+    let artist = '', title = '', spotifyThumb = null;
+
+    if(videoId){
+      const meta = await fetchYouTubeMeta(ytLink);
+      if(meta){
+        const parsed = splitArtistTitle(meta.title);
+        artist = parsed.artist || meta.author || '';
+        title = parsed.title || meta.title || '';
+      }
+    } else if(spotifyId){
+      // Spotify's public oEmbed only exposes a title + thumbnail, no separate artist field —
+      // title still auto-fills, artist can be fixed by clicking it in the list below if needed.
+      const meta = await fetchSpotifyMeta(spLink);
+      if(meta){
+        if(meta.thumbnail) spotifyThumb = meta.thumbnail;
+        title = meta.title || '';
       }
     }
+    if(!artist) artist = 'Interpret antippen zum Bearbeiten';
 
-    state.library.push({ id: uid(), artist, title, videoId: videoId||null, spotifyId: spotifyId||null, spotifyThumb, categories });
-    artistInput.value=''; titleInput.value=''; linkInput.value=''; catInput.value='';
-    linkMetaCache = { link: '', spotifyThumb: null };
+    const newSongId = uid();
+    lastAddedSongId = newSongId;
+    state.library.push({ id: newSongId, artist, title, videoId: videoId||null, spotifyId: spotifyId||null, spotifyThumb, categories: [] });
+    ytInput.value = ''; spInput.value = '';
     renderLibraryList(); saveLibrary(); refreshFilterAndSizes();
-    artistInput.focus();
+
+    addBtn.disabled = false; addBtn.textContent = '➕ Song hinzufügen';
+    statusEl.style.display = 'none';
+    ytInput.focus();
   });
-  ['new-artist','new-title','new-link','new-cat'].forEach(id=>{
-    document.getElementById(id).addEventListener('keydown', (e)=>{ if(e.key==='Enter') document.getElementById('lib-add-btn').click(); });
+  [document.getElementById('new-youtube-link'), document.getElementById('new-spotify-link')].forEach(inp=>{
+    inp.addEventListener('keydown', (e)=>{ if(e.key==='Enter') document.getElementById('lib-add-btn').click(); });
   });
 
   // ---------- Category + bracket-size chips ----------
@@ -971,6 +1174,7 @@
     refreshPlaylistSuggestions();
     renderCategoryChips();
     renderSizeChips();
+    renderTimeChips();
     updateStartHint();
   }
 
@@ -984,7 +1188,7 @@
     allChip.textContent = 'Alle';
     allChip.addEventListener('click', ()=>{
       state.filterCategories.clear();
-      renderSizeChips(); renderCategoryChips(); updateStartHint();
+      renderCategoryChips(); updateStartHint();
     });
     wrap.appendChild(allChip);
 
@@ -996,34 +1200,56 @@
       chip.addEventListener('click', ()=>{
         if(state.filterCategories.has(cat)) state.filterCategories.delete(cat);
         else state.filterCategories.add(cat);
-        renderSizeChips(); renderCategoryChips(); updateStartHint();
+        renderCategoryChips(); updateStartHint();
       });
       wrap.appendChild(chip);
     });
   }
 
+  const ROUND_OPTIONS = [
+    { rounds: 2, songs: 4 },
+    { rounds: 3, songs: 8 },
+    { rounds: 4, songs: 16 },
+    { rounds: 5, songs: 32 }
+  ];
+
   function renderSizeChips(){
     const wrap = document.getElementById('size-chips');
-    const pool = computeFilteredPool();
-    const candidates = [4,8,16,32].filter(c => c <= pool.length);
-
-    if(state.bracketSize === null || !candidates.includes(state.bracketSize)){
-      state.bracketSize = candidates.length ? candidates[candidates.length-1] : null;
-    }
+    if(state.bracketSize === null) state.bracketSize = 8; // sensible default: 3 Runden
 
     wrap.innerHTML = '';
-    if(candidates.length === 0){
-      wrap.innerHTML = `<span style="color:var(--muted); font-size:13px;">Noch nicht genug Songs (mind. 4 nötig)</span>`;
-      return;
-    }
-    candidates.forEach(c=>{
+    ROUND_OPTIONS.forEach(opt=>{
       const chip = document.createElement('button');
       chip.type = 'button';
-      chip.className = 'chip' + (state.bracketSize === c ? ' active' : '');
-      chip.textContent = `${c} Songs`;
+      chip.className = 'chip' + (state.bracketSize === opt.songs ? ' active' : '');
+      chip.textContent = `${opt.rounds} Runden · ${opt.songs} Songs`;
       chip.addEventListener('click', ()=>{
-        state.bracketSize = c;
+        state.bracketSize = opt.songs;
         renderSizeChips();
+        updateStartHint();
+      });
+      wrap.appendChild(chip);
+    });
+  }
+
+  const TIME_OPTIONS = [
+    { label: 'Kein Limit', seconds: null },
+    { label: '15 Sek', seconds: 15 },
+    { label: '30 Sek', seconds: 30 },
+    { label: '60 Sek', seconds: 60 }
+  ];
+
+  function renderTimeChips(){
+    const wrap = document.getElementById('time-chips');
+    wrap.innerHTML = '';
+    TIME_OPTIONS.forEach(opt=>{
+      const chip = document.createElement('button');
+      chip.type = 'button';
+      chip.className = 'chip' + (state.voteTimeLimit === opt.seconds ? ' active' : '');
+      chip.textContent = opt.label;
+      chip.addEventListener('click', ()=>{
+        state.voteTimeLimit = opt.seconds;
+        renderTimeChips();
       });
       wrap.appendChild(chip);
     });
@@ -1032,12 +1258,18 @@
   function updateStartHint(){
     const pool = computeFilteredPool();
     const hint = document.getElementById('start-hint');
+    const progressHint = document.getElementById('lib-progress-hint');
     const startBtn = document.getElementById('start-tournament-btn');
-    if(pool.length < 4){
-      hint.textContent = `Mindestens 4 Songs in dieser Auswahl nötig (aktuell ${pool.length}).`;
+    const needed = state.bracketSize || 4;
+
+    const progressText = `${pool.length} von ${needed} benötigten Songs in dieser Auswahl.`;
+    if(progressHint) progressHint.textContent = progressText + ' Nur eins der beiden Felder ausfüllen — Interpret & Titel werden automatisch geladen.';
+
+    if(pool.length < needed){
+      hint.textContent = `Noch ${needed - pool.length} Song(s) hinzufügen, um dieses Turnier zu starten.`;
       startBtn.disabled = true;
     } else {
-      hint.textContent = `${pool.length} Songs in der Auswahl — Turnier mit ${state.bracketSize} Songs bereit. 🎉`;
+      hint.textContent = `${progressText} Turnier bereit. 🎉`;
       startBtn.disabled = false;
     }
   }
@@ -1076,9 +1308,16 @@
     return ROUND_NAMES_FROM_FINAL[distanceFromFinal] || `Runde ${roundIndex+1}`;
   }
 
+  function retriggerAnim(el){
+    el.classList.remove('match-transition');
+    void el.offsetWidth; // force reflow so the animation restarts
+    el.classList.add('match-transition');
+  }
+
   function currentMatchup(){ return state.rounds[state.currentRound][state.currentMatch]; }
 
   function showMatch(){
+    clearVoteTimer();
     state.votesA = 0; state.votesB = 0; state.localTapsA = 0; state.localTapsB = 0;
     state.remoteVotesSnapshot = { a: 0, b: 0 };
     state.votingActive = false; state.decided = false; state.nowPlaying = null;
@@ -1111,8 +1350,12 @@
     document.getElementById('winner-banner').style.display = 'none';
     document.getElementById('next-row').style.display = 'none';
 
+    retriggerAnim(document.getElementById('round-header-anim'));
+    retriggerAnim(document.getElementById('duel-arena-el'));
+    retriggerAnim(document.getElementById('video-stage'));
+
     pushMatchToFirebase();
-    renderHistory();
+    renderBracketTree('bracket-tree');
   }
 
   function fillCard(side, song){
@@ -1151,6 +1394,31 @@
   document.getElementById('listen-a-btn').addEventListener('click', ()=>playSong('a'));
   document.getElementById('listen-b-btn').addEventListener('click', ()=>playSong('b'));
 
+  function clearVoteTimer(){
+    if(state.voteTimerInterval){ clearInterval(state.voteTimerInterval); state.voteTimerInterval = null; }
+    document.getElementById('vote-timer').style.display = 'none';
+  }
+
+  function startVoteTimer(){
+    if(state.voteTimeLimit === null) return;
+    state.voteTimeRemaining = state.voteTimeLimit;
+    const timerEl = document.getElementById('vote-timer');
+    const numEl = document.getElementById('vote-timer-num');
+    timerEl.style.display = 'block';
+    timerEl.classList.remove('urgent');
+    numEl.textContent = state.voteTimeRemaining;
+
+    state.voteTimerInterval = setInterval(()=>{
+      state.voteTimeRemaining--;
+      numEl.textContent = Math.max(state.voteTimeRemaining, 0);
+      timerEl.classList.toggle('urgent', state.voteTimeRemaining <= 5);
+      if(state.voteTimeRemaining <= 0){
+        clearVoteTimer();
+        endVoting();
+      }
+    }, 1000);
+  }
+
   document.getElementById('start-vote-btn').addEventListener('click', ()=>{
     state.votingActive = true;
     document.getElementById('vote-section').style.display = 'block';
@@ -1158,6 +1426,7 @@
     if(firebaseReady && state.networked && state.roomCode){
       db.ref('rooms/'+state.roomCode).update({ votingActive: true });
     }
+    startVoteTimer();
   });
 
   document.getElementById('vote-a-btn').addEventListener('click', ()=>{
@@ -1175,8 +1444,9 @@
     updateVoteDisplay();
   });
 
-  document.getElementById('vote-end-btn').addEventListener('click', ()=>{
+  function endVoting(){
     if(state.decided) return;
+    clearVoteTimer();
     document.getElementById('vote-section').style.display = 'none';
     if(firebaseReady && state.networked && state.roomCode){
       db.ref('rooms/'+state.roomCode).update({ votingActive: false });
@@ -1188,7 +1458,8 @@
       const winner = state.votesA > state.votesB ? match.songA : match.songB;
       finalizeMatch(winner);
     }
-  });
+  }
+  document.getElementById('vote-end-btn').addEventListener('click', endVoting);
 
   function showTiebreak(){
     const match = currentMatchup();
@@ -1222,20 +1493,53 @@
       winner: winnerSong
     });
     state.results[state.currentRound].push(winnerSong);
-    renderHistory();
+    renderBracketTree('bracket-tree');
   }
 
-  function renderHistory(){
-    const box = document.getElementById('history-box');
-    const list = document.getElementById('history-list');
-    if(state.history.length === 0){ box.style.display = 'none'; return; }
-    box.style.display = 'block';
-    list.innerHTML = state.history.slice().reverse().map(h => `
-      <div class="history-item">
-        <span class="hi-round">${escapeHtml(h.roundName)}: ${escapeHtml(songLabel(h.songA))} 🆚 ${escapeHtml(songLabel(h.songB))}</span>
-        <span class="hi-winner">${escapeHtml(songLabel(h.winner))}</span>
-      </div>
-    `).join('');
+  function bracketSlotHtml(song, winner){
+    if(!song){
+      return `<div class="bracket-slot tbd"><div class="bracket-slot-noimg">?</div><span>Offen</span></div>`;
+    }
+    const thumb = libThumbSrc(song);
+    const decided = !!winner;
+    const isWinner = decided && winner === song;
+    const cls = decided ? (isWinner ? 'winner' : 'loser') : '';
+    return `<div class="bracket-slot ${cls}">
+      ${thumb ? `<img src="${thumb}" alt="">` : `<div class="bracket-slot-noimg">🎵</div>`}
+      <span>${escapeHtml(songLabel(song))}</span>
+    </div>`;
+  }
+  function bracketMatchHtml(songA, songB, winner, isCurrent){
+    return `<div class="bracket-match ${isCurrent ? 'current' : ''}">
+      ${bracketSlotHtml(songA, winner)}
+      ${bracketSlotHtml(songB, winner)}
+    </div>`;
+  }
+  function renderBracketTree(containerId){
+    const container = document.getElementById(containerId);
+    const box = container.closest('.history-box');
+    if(state.rounds.length === 0){ if(box) box.style.display = 'none'; return; }
+    if(box) box.style.display = 'block';
+
+    const total = totalRoundsFromSize();
+    let html = '';
+    for(let r = 0; r < total; r++){
+      html += `<div class="bracket-round"><div class="bracket-round-title">${escapeHtml(roundName(r))}</div><div class="bracket-matches">`;
+      if(r < state.rounds.length){
+        const matches = state.rounds[r];
+        const winners = state.results[r] || [];
+        matches.forEach((m, i) => {
+          const winner = winners[i];
+          const isCurrent = (r === state.currentRound && i === state.currentMatch && !winner);
+          html += bracketMatchHtml(m.songA, m.songB, winner, isCurrent);
+        });
+      } else {
+        const numMatches = Math.pow(2, total - r - 1);
+        for(let i=0;i<numMatches;i++) html += bracketMatchHtml(null, null, null, false);
+      }
+      html += `</div></div>`;
+    }
+    container.innerHTML = html;
   }
 
   document.getElementById('next-match-btn').addEventListener('click', ()=>{
@@ -1265,13 +1569,7 @@
     document.getElementById('champion-artist').textContent = champion.artist;
     document.getElementById('champion-title').textContent = champion.title || '';
 
-    const endList = document.getElementById('end-history-list');
-    endList.innerHTML = state.history.slice().reverse().map(h => `
-      <div class="history-item">
-        <span class="hi-round">${escapeHtml(h.roundName)}: ${escapeHtml(songLabel(h.songA))} 🆚 ${escapeHtml(songLabel(h.songB))}</span>
-        <span class="hi-winner">${escapeHtml(songLabel(h.winner))}</span>
-      </div>
-    `).join('');
+    renderBracketTree('end-bracket-tree');
 
     if(firebaseReady && state.networked && state.roomCode){
       db.ref('rooms/'+state.roomCode).update({
@@ -1281,7 +1579,6 @@
       });
     }
 
-    renderHofStrip();
     showScreen('end');
   }
 
