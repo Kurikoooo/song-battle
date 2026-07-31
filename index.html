@@ -407,20 +407,6 @@
     <p>Zwei Songs treten an. Abstimmen, wer gewinnt — bis ein Sieger übrig bleibt.</p>
   </header>
 
-  <nav class="top-nav" id="top-nav">
-    <button id="nav-tournament-btn" class="active">🏠 Turnier</button>
-    <button id="nav-hof-btn">🏆 Turniersieger</button>
-  </nav>
-
-  <!-- TURNIERSIEGER / HALL OF FAME -->
-  <section id="screen-hof" class="screen">
-    <div class="panel">
-      <h2>🏆 Turniersieger</h2>
-      <p class="sub">Alle Songs, die schon mal ein ganzes Turnier gewonnen haben.</p>
-      <div class="hof-list" id="hof-full-list"></div>
-    </div>
-  </section>
-
   <!-- MODE SELECT (only shown when Firebase is configured) -->
   <!-- LANDING (brand new first page, shown when Firebase is configured) -->
   <section id="screen-landing" class="screen">
@@ -506,14 +492,14 @@
     <div class="winner-banner" id="voter-ended-msg" style="display:none;"></div>
   </section>
 
-  <!-- SETUP -->
-  <section id="screen-setup" class="screen">
-    <button class="back-link" id="setup-back-link" data-back="mode-select" style="display:none;">← Zurück</button>
+  <!-- RULES (step 1) -->
+  <section id="screen-rules" class="screen">
+    <button class="back-link" id="rules-back-link" data-back="mode-select" style="display:none;">← Zurück</button>
 
-    <div class="hof-strip" id="setup-room-banner" style="display:none;">
-      📡 Raum-Code: <b id="setup-room-code-value">----</b>
+    <div class="hof-strip" id="rules-room-banner" style="display:none;">
+      📡 Raum-Code: <b id="rules-room-code-value">----</b>
     </div>
-    <div class="participants-box" id="setup-participants-box" style="display:none;"></div>
+    <div class="participants-box" id="rules-participants-box" style="display:none;"></div>
 
     <div class="panel">
       <h2><span class="step-badge">1</span> Spielregeln</h2>
@@ -528,6 +514,20 @@
       <span class="field-label">Playlists</span>
       <div class="chip-row" id="category-chips"></div>
     </div>
+
+    <div class="btn-row">
+      <button class="btn full" id="rules-next-btn">Weiter →</button>
+    </div>
+  </section>
+
+  <!-- LIBRARY (step 2) -->
+  <section id="screen-library" class="screen">
+    <button class="back-link" data-back="rules">← Zurück</button>
+
+    <div class="hof-strip" id="library-room-banner" style="display:none;">
+      📡 Raum-Code: <b id="library-room-code-value">----</b>
+    </div>
+    <div class="participants-box" id="library-participants-box" style="display:none;"></div>
 
     <div class="panel">
       <h2><span class="step-badge">2</span> Song-Bibliothek</h2>
@@ -672,7 +672,7 @@
     </div>
   </section>
 
-  <p class="footer-note">Tipp: Volle Lautstärke sorgt für maximale Verwirrung. Viel Spaß! 🎶</p>
+
 
 </div>
 
@@ -712,7 +712,7 @@
 
   const SEED_LIBRARY = [];
 
-  const ROUND_NAMES_FROM_FINAL = ['Finale','Halbfinale','Viertelfinale','Achtelfinale','Sechzehntelfinale'];
+  const ROUND_NAMES_FROM_FINAL = ['Finale','Halbfinale','Viertelfinale','Achtelfinale','Sechzehntelfinale','Zweiunddreißigstelfinale'];
 
   let state = {
     library: [],
@@ -839,43 +839,12 @@
   function showScreen(id){
     document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
     document.getElementById('screen-'+id).classList.add('active');
-
-    const nav = document.getElementById('top-nav');
-    nav.style.display = GAMEPLAY_SCREENS.includes(id) ? 'none' : 'flex';
-    document.getElementById('nav-hof-btn').classList.toggle('active', id === 'hof');
-    document.getElementById('nav-tournament-btn').classList.toggle('active', id !== 'hof' && !GAMEPLAY_SCREENS.includes(id));
   }
 
   function goToTournamentHome(){
     if(firebaseReady) showScreen('landing');
-    else showScreen('setup');
+    else showScreen('rules');
   }
-
-  function renderFullHofList(){
-    const list = document.getElementById('hof-full-list');
-    const entries = Object.values(state.hallOfFame).sort((a,b)=>b.wins-a.wins);
-    if(entries.length === 0){
-      list.innerHTML = `<p class="start-hint">Noch keine Turniersieger — spielt euer erstes Turnier, dann taucht der Sieger hier auf!</p>`;
-      return;
-    }
-    const medals = ['🥇','🥈','🥉'];
-    list.innerHTML = entries.map((e, i) => `
-      <div class="hof-row ${i < 3 ? 'rank-'+(i+1) : ''}">
-        <div class="rank">${medals[i] || (i+1)}</div>
-        <div class="hof-meta">
-          <div class="hof-artist">${escapeHtml(e.artist)}</div>
-          ${e.title ? `<div class="hof-title">${escapeHtml(e.title)}</div>` : ''}
-        </div>
-        <div class="hof-wins">${e.wins}×</div>
-      </div>
-    `).join('');
-  }
-
-  document.getElementById('nav-tournament-btn').addEventListener('click', goToTournamentHome);
-  document.getElementById('nav-hof-btn').addEventListener('click', ()=>{
-    renderFullHofList();
-    showScreen('hof');
-  });
 
   // ---------- Landing / Mode select / navigation ----------
   document.getElementById('landing-create-btn').addEventListener('click', ()=>{
@@ -886,14 +855,17 @@
   });
   document.getElementById('mode-host-btn').addEventListener('click', ()=>{
     state.networked = true;
-    document.getElementById('setup-back-link').style.display = 'inline-flex';
+    document.getElementById('rules-back-link').style.display = 'inline-flex';
     if(firebaseReady && !state.roomCode){ createFirebaseRoom(); }
-    showScreen('setup');
+    showScreen('rules');
   });
   document.getElementById('mode-offline-btn').addEventListener('click', ()=>{
     state.networked = false;
-    document.getElementById('setup-back-link').style.display = 'inline-flex';
-    showScreen('setup');
+    document.getElementById('rules-back-link').style.display = 'inline-flex';
+    showScreen('rules');
+  });
+  document.getElementById('rules-next-btn').addEventListener('click', ()=>{
+    showScreen('library');
   });
   document.querySelectorAll('[data-back]').forEach(btn=>{
     btn.addEventListener('click', ()=>{
@@ -905,8 +877,10 @@
       if(btn.dataset.back === 'landing'){
         state.roomCode = null;
         document.getElementById('room-banner').style.display = 'none';
-        document.getElementById('setup-room-banner').style.display = 'none';
-        document.getElementById('setup-participants-box').style.display = 'none';
+        document.getElementById('rules-room-banner').style.display = 'none';
+        document.getElementById('rules-participants-box').style.display = 'none';
+        document.getElementById('library-room-banner').style.display = 'none';
+        document.getElementById('library-participants-box').style.display = 'none';
         document.getElementById('game-participants-box').style.display = 'none';
       }
       showScreen(btn.dataset.back);
@@ -920,9 +894,10 @@
     state.roomCode = generateRoomCode();
     db.ref('rooms/'+state.roomCode).set({ createdAt: Date.now(), status: 'setup' });
 
-    ['room-banner','setup-room-banner'].forEach(id=>{ document.getElementById(id).style.display = 'flex'; });
+    ['room-banner','rules-room-banner','library-room-banner'].forEach(id=>{ document.getElementById(id).style.display = 'flex'; });
     document.getElementById('room-code-value').textContent = state.roomCode;
-    document.getElementById('setup-room-code-value').textContent = state.roomCode;
+    document.getElementById('rules-room-code-value').textContent = state.roomCode;
+    document.getElementById('library-room-code-value').textContent = state.roomCode;
 
     db.ref('rooms/'+state.roomCode+'/remoteVotes').on('value', (snap)=>{
       const val = snap.val() || {};
@@ -942,7 +917,7 @@
     const html = names.length === 0
       ? `👥 Noch niemand beigetreten — Code weitergeben!`
       : `👥 <b>${names.length}</b> verbunden: ` + names.map(n=>`<span class="participant-pill">${escapeHtml(n)}</span>`).join(' ');
-    ['setup-participants-box','game-participants-box'].forEach(id=>{
+    ['rules-participants-box','library-participants-box','game-participants-box'].forEach(id=>{
       const el = document.getElementById(id);
       el.style.display = 'flex';
       el.innerHTML = html;
@@ -1276,7 +1251,8 @@
     { rounds: 2, songs: 4 },
     { rounds: 3, songs: 8 },
     { rounds: 4, songs: 16 },
-    { rounds: 5, songs: 32 }
+    { rounds: 5, songs: 32 },
+    { rounds: 6, songs: 64 }
   ];
 
   function renderSizeChips(){
@@ -1288,7 +1264,7 @@
       const chip = document.createElement('button');
       chip.type = 'button';
       chip.className = 'chip' + (state.bracketSize === opt.songs ? ' active' : '');
-      chip.textContent = `${opt.rounds} Runden · ${opt.songs} Songs`;
+      chip.textContent = `${opt.songs}`;
       chip.addEventListener('click', ()=>{
         state.bracketSize = opt.songs;
         renderSizeChips();
@@ -1300,6 +1276,7 @@
 
   const TIME_OPTIONS = [
     { label: 'Kein Limit', seconds: null },
+    { label: '5 Sek', seconds: 5 },
     { label: '15 Sek', seconds: 15 },
     { label: '30 Sek', seconds: 30 },
     { label: '60 Sek', seconds: 60 }
@@ -1650,7 +1627,7 @@
     if(firebaseReady && state.networked && state.roomCode){
       db.ref('rooms/'+state.roomCode).update({ status: 'setup', songA: null, songB: null });
     }
-    showScreen('setup');
+    showScreen('library');
   });
 
   loadState();
