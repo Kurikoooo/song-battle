@@ -133,6 +133,19 @@
   }
   input[type=text]:focus-visible{ border-color: var(--amber); box-shadow: 0 0 0 3px rgba(255,194,75,0.22); }
 
+  textarea{
+    background: #100a19; border: 1.5px solid var(--line); color: var(--cream);
+    font-family:'Manrope',sans-serif; font-size:13.5px; padding:11px 12px; border-radius: var(--radius-sm);
+    outline:none; width:100%; resize:vertical; line-height:1.5;
+  }
+  textarea:focus-visible{ border-color: var(--amber); box-shadow: 0 0 0 3px rgba(255,194,75,0.22); }
+
+  .templates-box{
+    background: var(--surface-2); border:1px solid var(--line); border-radius: var(--radius-md);
+    padding:14px; margin-bottom:16px;
+  }
+  #bulk-add-panel{ margin-top:10px; }
+
   .input-icon-group{ position:relative; }
   .input-icon-group input[type=text]{ padding-left:38px; }
   .input-icon{
@@ -492,9 +505,19 @@
     <div class="winner-banner" id="voter-ended-msg" style="display:none;"></div>
   </section>
 
+  <!-- TEMPLATE CHOICE (shown right after Online/Offline) -->
+  <section id="screen-template-choice" class="screen">
+    <button class="back-link" data-back="mode-select">← Zurück</button>
+    <div class="panel" style="text-align:center;">
+      <h2 style="justify-content:center;">Vorlage nutzen?</h2>
+      <p class="sub">Fertiges Song-Set laden oder selbst zusammenstellen?</p>
+    </div>
+    <div class="mode-cards" id="template-choice-cards"></div>
+  </section>
+
   <!-- RULES (step 1) -->
   <section id="screen-rules" class="screen">
-    <button class="back-link" id="rules-back-link" data-back="mode-select" style="display:none;">← Zurück</button>
+    <button class="back-link" id="rules-back-link" data-back="template-choice" style="display:none;">← Zurück</button>
 
     <div class="hof-strip" id="rules-room-banner" style="display:none;">
       📡 Raum-Code: <b id="rules-room-code-value">----</b>
@@ -533,6 +556,15 @@
       <h2><span class="step-badge">2</span> Song-Bibliothek</h2>
       <p class="sub" id="lib-progress-hint">Nur eins der beiden Felder ausfüllen — Interpret &amp; Titel werden automatisch geladen.</p>
 
+      <div class="templates-box">
+        <span class="field-label">📋 Vorlagen — fertige Song-Sets laden</span>
+        <div class="chip-row" id="template-chips"></div>
+        <div class="btn-row" style="justify-content:flex-start; margin-top:4px;">
+          <button class="btn small" id="save-template-btn">💾 Aktuelle Bibliothek als Vorlage speichern</button>
+        </div>
+        <div class="form-error" id="template-msg"></div>
+      </div>
+
       <div id="lib-list" class="lib-list"></div>
       <div id="lib-empty-hint" class="empty-hint" style="display:none;"></div>
 
@@ -557,6 +589,16 @@
       <div class="form-error" id="lib-form-error"></div>
       <div class="btn-row" style="justify-content:flex-start;">
         <button class="btn small" id="lib-add-btn">➕ Song hinzufügen</button>
+      </div>
+
+      <button class="back-link" id="bulk-toggle-btn" style="margin-top:14px;">📋 Mehrere Links auf einmal einfügen ▾</button>
+      <div id="bulk-add-panel" style="display:none;">
+        <textarea id="bulk-links-input" rows="4" placeholder="Einen Link pro Zeile — YouTube und Spotify gemischt möglich"></textarea>
+        <div class="btn-row" style="justify-content:flex-start; margin-top:8px;">
+          <button class="btn small" id="bulk-add-btn">➕ Alle hinzufügen</button>
+        </div>
+        <div class="spinner-row" id="bulk-status" style="display:none;"></div>
+        <div class="form-error" id="bulk-msg"></div>
       </div>
     </div>
 
@@ -709,13 +751,24 @@
 (function(){
   const KEY_LIBRARY = 'song-battle-library-v1';
   const KEY_HOF = 'song-duel-hof-v1';
+  const KEY_TEMPLATES = 'song-battle-templates-v1';
 
   const SEED_LIBRARY = [];
+
+  const SEED_TEMPLATES = {
+    'Linkin Park': [
+      { artist:'Linkin Park', title:'In the End', videoId:'oIwWqYSbzGA', spotifyId:null, spotifyThumb:null, categories:['Linkin Park'] },
+      { artist:'Linkin Park', title:'Numb', videoId:'8Jwj_lpwnZk', spotifyId:null, spotifyThumb:null, categories:['Linkin Park'] },
+      { artist:'Linkin Park', title:"What I've Done", videoId:'pMePM9Q-bYk', spotifyId:null, spotifyThumb:null, categories:['Linkin Park'] },
+      { artist:'Linkin Park', title:'Faint', videoId:'LYU-8IFcDPw', spotifyId:null, spotifyThumb:null, categories:['Linkin Park'] }
+    ]
+  };
 
   const ROUND_NAMES_FROM_FINAL = ['Finale','Halbfinale','Viertelfinale','Achtelfinale','Sechzehntelfinale','Zweiunddreißigstelfinale'];
 
   let state = {
     library: [],
+    templates: {},
     hallOfFame: {},
     filterCategories: new Set(),
     bracketSize: null,
@@ -771,6 +824,15 @@
       if(raw) state.hallOfFame = JSON.parse(raw);
     }catch(e){}
 
+    try{
+      const raw = localStorage.getItem(KEY_TEMPLATES);
+      state.templates = raw ? JSON.parse(raw) : Object.assign({}, SEED_TEMPLATES);
+      if(!raw) saveTemplates();
+    }catch(e){
+      state.templates = Object.assign({}, SEED_TEMPLATES);
+      saveTemplates();
+    }
+
     renderLibraryList();
     refreshFilterAndSizes();
 
@@ -778,6 +840,7 @@
   }
   function saveLibrary(){ try{ localStorage.setItem(KEY_LIBRARY, JSON.stringify(state.library)); }catch(e){} }
   function saveHof(){ try{ localStorage.setItem(KEY_HOF, JSON.stringify(state.hallOfFame)); }catch(e){} }
+  function saveTemplates(){ try{ localStorage.setItem(KEY_TEMPLATES, JSON.stringify(state.templates)); }catch(e){} }
 
   // ---------- Utils ----------
   function extractYouTubeId(input){
@@ -857,13 +920,52 @@
     state.networked = true;
     document.getElementById('rules-back-link').style.display = 'inline-flex';
     if(firebaseReady && !state.roomCode){ createFirebaseRoom(); }
-    showScreen('rules');
+    renderTemplateChoiceCards();
+    showScreen('template-choice');
   });
   document.getElementById('mode-offline-btn').addEventListener('click', ()=>{
     state.networked = false;
     document.getElementById('rules-back-link').style.display = 'inline-flex';
-    showScreen('rules');
+    renderTemplateChoiceCards();
+    showScreen('template-choice');
   });
+
+  function renderTemplateChoiceCards(){
+    const wrap = document.getElementById('template-choice-cards');
+    wrap.innerHTML = '';
+    Object.keys(state.templates).forEach(name=>{
+      const card = document.createElement('button');
+      card.className = 'mode-card';
+      card.innerHTML = `
+        <span class="mode-icon">📋</span>
+        <span class="mode-text"><span class="mode-title">${escapeHtml(name)}</span><span class="mode-desc">${state.templates[name].length} Songs — sofort startklar</span></span>
+        <span class="mode-arrow">→</span>
+      `;
+      card.addEventListener('click', ()=>{
+        loadTemplateReplacing(name);
+        showScreen('rules');
+      });
+      wrap.appendChild(card);
+    });
+    const noBtn = document.createElement('button');
+    noBtn.className = 'mode-card';
+    noBtn.innerHTML = `
+      <span class="mode-icon">✖️</span>
+      <span class="mode-text"><span class="mode-title">Nein, selbst zusammenstellen</span><span class="mode-desc">Eigene Songs hinzufügen und Playlists verwalten</span></span>
+      <span class="mode-arrow">→</span>
+    `;
+    noBtn.addEventListener('click', ()=>{ showScreen('rules'); });
+    wrap.appendChild(noBtn);
+  }
+
+  function loadTemplateReplacing(name){
+    const songs = state.templates[name] || [];
+    state.library = songs.map(tpl => Object.assign({}, tpl, { id: uid(), categories: (tpl.categories||[]).slice() }));
+    saveLibrary();
+    renderLibraryList();
+    refreshFilterAndSizes();
+  }
+
   document.getElementById('rules-next-btn').addEventListener('click', ()=>{
     showScreen('library');
   });
@@ -1205,6 +1307,128 @@
     inp.addEventListener('keydown', (e)=>{ if(e.key==='Enter') document.getElementById('lib-add-btn').click(); });
   });
 
+  // ---------- Templates ----------
+  function songMatches(a, b){
+    if(a.videoId && b.videoId) return a.videoId === b.videoId;
+    if(a.spotifyId && b.spotifyId) return a.spotifyId === b.spotifyId;
+    return false;
+  }
+
+  function renderTemplateChips(){
+    const wrap = document.getElementById('template-chips');
+    const names = Object.keys(state.templates);
+    wrap.innerHTML = '';
+    if(names.length === 0){
+      wrap.innerHTML = `<span style="color:var(--muted); font-size:13px;">Noch keine Vorlagen gespeichert.</span>`;
+      return;
+    }
+    names.forEach(name=>{
+      const chip = document.createElement('button');
+      chip.type = 'button';
+      chip.className = 'chip';
+      chip.textContent = `▶️ ${name} (${state.templates[name].length})`;
+      chip.addEventListener('click', ()=>loadTemplate(name));
+      wrap.appendChild(chip);
+    });
+  }
+
+  function loadTemplate(name){
+    const msg = document.getElementById('template-msg');
+    const songs = state.templates[name] || [];
+    let added = 0;
+    songs.forEach(tpl=>{
+      const exists = state.library.some(s=>songMatches(s, tpl));
+      if(!exists){
+        state.library.push(Object.assign({}, tpl, { id: uid(), categories: (tpl.categories||[]).slice() }));
+        added++;
+      }
+    });
+    saveLibrary();
+    renderLibraryList();
+    refreshFilterAndSizes();
+    msg.style.color = 'var(--cyan)';
+    msg.textContent = added > 0 ? `✅ ${added} Song(s) aus „${name}" hinzugefügt.` : `Alle Songs aus „${name}" waren schon in der Bibliothek.`;
+  }
+
+  document.getElementById('save-template-btn').addEventListener('click', ()=>{
+    const msg = document.getElementById('template-msg');
+    msg.style.color = 'var(--pink)';
+    if(state.library.length === 0){ msg.textContent = 'Bibliothek ist leer — erst Songs hinzufügen.'; return; }
+    const name = prompt('Name für die Vorlage (z.B. "Rock Night"):');
+    if(!name || !name.trim()) return;
+    const trimmed = name.trim();
+    state.templates[trimmed] = state.library.map(s => ({
+      artist: s.artist, title: s.title, videoId: s.videoId, spotifyId: s.spotifyId,
+      spotifyThumb: s.spotifyThumb, categories: (s.categories||[]).slice()
+    }));
+    saveTemplates();
+    renderTemplateChips();
+    msg.style.color = 'var(--cyan)';
+    msg.textContent = `✅ Vorlage „${trimmed}" gespeichert (${state.library.length} Songs).`;
+  });
+
+  // ---------- Bulk add (multiple links at once) ----------
+  document.getElementById('bulk-toggle-btn').addEventListener('click', ()=>{
+    const panel = document.getElementById('bulk-add-panel');
+    const btn = document.getElementById('bulk-toggle-btn');
+    const isOpen = panel.style.display === 'block';
+    panel.style.display = isOpen ? 'none' : 'block';
+    btn.textContent = isOpen ? '📋 Mehrere Links auf einmal einfügen ▾' : '📋 Mehrere Links auf einmal einfügen ▴';
+  });
+
+  document.getElementById('bulk-add-btn').addEventListener('click', async ()=>{
+    const textarea = document.getElementById('bulk-links-input');
+    const statusEl = document.getElementById('bulk-status');
+    const msgEl = document.getElementById('bulk-msg');
+    const btn = document.getElementById('bulk-add-btn');
+    msgEl.textContent = '';
+
+    const lines = textarea.value.split('\n').map(l=>l.trim()).filter(Boolean);
+    if(lines.length === 0){ msgEl.textContent = 'Bitte mindestens einen Link einfügen.'; return; }
+
+    btn.disabled = true;
+    statusEl.style.display = 'flex';
+    let successCount = 0, failCount = 0;
+
+    for(let i=0; i<lines.length; i++){
+      statusEl.innerHTML = `<span class="spinner"></span> Verarbeite Link ${i+1} von ${lines.length} …`;
+      const link = lines[i];
+      const videoId = extractYouTubeId(link);
+      const spotifyId = videoId ? null : extractSpotifyTrackId(link);
+      if(!videoId && !spotifyId){ failCount++; continue; }
+
+      let artist = '', title = '', spotifyThumb = null;
+      if(videoId){
+        const meta = await fetchYouTubeMeta(link);
+        if(meta){
+          const parsed = splitArtistTitle(meta.title);
+          artist = parsed.artist || meta.author || '';
+          title = parsed.title || meta.title || '';
+        }
+      } else if(spotifyId){
+        const meta = await fetchSpotifyMeta(link);
+        if(meta){
+          if(meta.thumbnail) spotifyThumb = meta.thumbnail;
+          title = meta.title || '';
+        }
+      }
+      if(!artist) artist = 'Interpret antippen zum Bearbeiten';
+
+      state.library.push({ id: uid(), artist, title, videoId: videoId||null, spotifyId: spotifyId||null, spotifyThumb, categories: [] });
+      successCount++;
+    }
+
+    saveLibrary();
+    renderLibraryList();
+    refreshFilterAndSizes();
+
+    statusEl.style.display = 'none';
+    msgEl.style.color = 'var(--cyan)';
+    msgEl.textContent = `✅ ${successCount} Song(s) hinzugefügt` + (failCount > 0 ? `, ${failCount} Link(s) nicht erkannt.` : '.');
+    textarea.value = '';
+    btn.disabled = false;
+  });
+
   // ---------- Category + bracket-size chips ----------
   function computeFilteredPool(){
     if(state.filterCategories.size === 0) return state.library;
@@ -1216,6 +1440,7 @@
     renderCategoryChips();
     renderSizeChips();
     renderTimeChips();
+    renderTemplateChips();
     updateStartHint();
   }
 
