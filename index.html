@@ -554,7 +554,7 @@
 
     <div class="panel">
       <h2><span class="step-badge">2</span> Song-Bibliothek</h2>
-      <p class="sub" id="lib-progress-hint">Nur eins der beiden Felder ausfüllen — Interpret &amp; Titel werden automatisch geladen.</p>
+      <p class="sub">Nur eins der beiden Felder ausfüllen — Interpret &amp; Titel werden automatisch geladen.</p>
 
       <div class="templates-box">
         <span class="field-label">📋 Vorlagen — fertige Song-Sets laden</span>
@@ -1144,7 +1144,7 @@
     list.innerHTML = '';
     if(state.library.length === 0){
       emptyHint.style.display = 'block';
-      emptyHint.textContent = 'Noch keine Songs in der Bibliothek. Fügt unten mindestens 4 hinzu.';
+      emptyHint.textContent = 'Noch keine Songs in der Bibliothek.';
     } else {
       emptyHint.style.display = 'none';
       state.library.forEach(item=>{
@@ -1526,18 +1526,14 @@
   function updateStartHint(){
     const pool = computeFilteredPool();
     const hint = document.getElementById('start-hint');
-    const progressHint = document.getElementById('lib-progress-hint');
     const startBtn = document.getElementById('start-tournament-btn');
     const needed = state.bracketSize || 4;
-
-    const progressText = `${pool.length} von ${needed} benötigten Songs in dieser Auswahl.`;
-    if(progressHint) progressHint.textContent = progressText + ' Nur eins der beiden Felder ausfüllen — Interpret & Titel werden automatisch geladen.';
 
     if(pool.length < needed){
       hint.textContent = `Noch ${needed - pool.length} Song(s) hinzufügen, um dieses Turnier zu starten.`;
       startBtn.disabled = true;
     } else {
-      hint.textContent = `${progressText} Turnier bereit. 🎉`;
+      hint.textContent = `${pool.length} von ${needed} benötigten Songs — Turnier bereit. 🎉`;
       startBtn.disabled = false;
     }
   }
