@@ -645,6 +645,7 @@
 
     <div class="vote-section" id="vote-section" style="display:none;">
       <div class="vote-timer" id="vote-timer" style="display:none;">⏱ <span id="vote-timer-num">30</span>s</div>
+      <p class="start-hint" id="online-vote-note" style="display:none;">📱 Läuft übers Handy — jede Person stimmt in der Mitspielen-Ansicht ab.</p>
       <div class="vote-row">
         <div class="vote-card left">
           <div class="vc-label" id="vote-label-a">Artist A</div>
@@ -1724,7 +1725,13 @@
     state.votingActive = true;
     document.getElementById('vote-section').style.display = 'block';
     document.getElementById('start-vote-row').style.display = 'none';
-    if(firebaseReady && state.networked && state.roomCode){
+
+    const isOnline = firebaseReady && state.networked && state.roomCode;
+    document.getElementById('online-vote-note').style.display = isOnline ? 'block' : 'none';
+    document.getElementById('vote-a-btn').style.display = isOnline ? 'none' : 'block';
+    document.getElementById('vote-b-btn').style.display = isOnline ? 'none' : 'block';
+
+    if(isOnline){
       db.ref('rooms/'+state.roomCode).update({ votingActive: true });
     }
     startVoteTimer();
@@ -1740,6 +1747,9 @@
     state.localTapsA = 0; state.localTapsB = 0;
     if(firebaseReady && state.networked && state.roomCode){
       db.ref('rooms/'+state.roomCode+'/remoteVotes').set(null);
+      // Nudge matchKey so participants whose device already thinks "voted" can vote again.
+      state.matchKey = state.matchKey + '-r' + Date.now();
+      db.ref('rooms/'+state.roomCode).update({ matchKey: state.matchKey });
     }
     state.remoteVotesSnapshot = { a: 0, b: 0 };
     updateVoteDisplay();
