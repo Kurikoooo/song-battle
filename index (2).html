@@ -1,0 +1,1923 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Song Battle</title>
+
+<!-- PWA / "Handy-App" setup -->
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#170F22">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Song Battle">
+<link rel="icon" href="icon-192.png" type="image/png">
+<link rel="apple-touch-icon" href="icon-180.png">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Righteous&family=Manrope:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #170F22;
+    --glow-pink: #3a1440;
+    --glow-cyan: #0f2e3a;
+    --surface: #241531;
+    --surface-2: #2f1c40;
+    --cream: #F6F1EA;
+    --muted: #9C8FB0;
+    --pink: #FF3E7F;
+    --cyan: #2FE6C7;
+    --amber: #FFC24B;
+    --line: rgba(246,241,234,0.12);
+    --radius-lg: 26px;
+    --radius-md: 16px;
+    --radius-sm: 10px;
+  }
+  *{box-sizing:border-box;}
+  html,body{
+    margin:0; padding:0;
+    background:
+      radial-gradient(circle at 15% -10%, var(--glow-pink), transparent 50%),
+      radial-gradient(circle at 100% 15%, var(--glow-cyan), transparent 45%),
+      var(--bg);
+    color: var(--cream);
+    font-family:'Manrope', sans-serif;
+    min-height:100vh;
+  }
+  #app{
+    max-width: 620px; margin:0 auto;
+    padding: calc(30px + env(safe-area-inset-top)) 18px calc(60px + env(safe-area-inset-bottom));
+  }
+  @media (pointer: coarse){ .chip{ padding:9px 16px; } .btn.small{ padding:11px 18px; } }
+
+  h1,h2{ font-family:'Righteous', sans-serif; margin:0; font-weight:400; }
+
+  header.hero{ text-align:center; margin-bottom:26px; }
+  header.hero h1{
+    font-size: clamp(30px, 7vw, 46px); color: var(--cream); letter-spacing:0.01em;
+    text-shadow: 0 0 18px rgba(255,62,127,0.45), 0 0 34px rgba(47,230,199,0.25);
+  }
+  header.hero .eyebrow{
+    font-family:'Manrope', sans-serif; letter-spacing:0.18em; text-transform:uppercase;
+    font-size:11.5px; color: var(--amber); font-weight:800; display:block; margin-bottom:6px;
+  }
+  header.hero p{ color: var(--muted); margin:8px 0 0; font-size:14.5px; }
+
+  .screen{ display:none; }
+  .screen.active{ display:block; animation: screenIn 0.32s ease; }
+  @keyframes screenIn{
+    from{ opacity:0; transform: translateY(8px); }
+    to{ opacity:1; transform: translateY(0); }
+  }
+  @media (prefers-reduced-motion: reduce){
+    .screen.active{ animation:none; }
+  }
+
+  .panel{
+    background: var(--surface); border:1px solid var(--line); border-radius: var(--radius-lg);
+    padding: 22px; margin-bottom: 18px;
+    box-shadow: 0 12px 30px rgba(0,0,0,0.22);
+  }
+  .panel h2{ font-size:18px; margin-bottom:4px; color: var(--cream); display:flex; align-items:center; gap:10px; }
+  .panel .sub{ color: var(--muted); font-size:13.5px; margin: 0 0 16px; line-height:1.5; }
+  .step-badge{
+    font-family:'Righteous',sans-serif; font-size:13px; color: var(--bg); background: var(--amber);
+    width:26px; height:26px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center;
+    flex-shrink:0;
+  }
+
+  .hof-strip{
+    display:flex; align-items:center; justify-content:center; gap:8px; flex-wrap:wrap;
+    background: var(--surface-2); border:1px solid var(--line); border-radius: 999px;
+    padding:9px 16px; font-size:12.5px; color: var(--muted); margin-bottom:18px; text-align:center;
+  }
+  .hof-strip b{ color: var(--cream); }
+
+  .participants-box{
+    display:flex; align-items:center; gap:8px; flex-wrap:wrap; justify-content:center;
+    background: var(--surface-2); border:1px solid var(--line); border-radius: 999px;
+    padding:8px 16px; font-size:12.5px; color: var(--muted); margin-bottom:18px; text-align:center;
+  }
+  .participants-box b{ color: var(--cyan); }
+  .participant-pill{
+    background: var(--surface); border-radius:999px; padding:2px 10px; font-size:11.5px; color: var(--cream);
+  }
+
+  .mode-cards{ display:flex; flex-direction:column; gap:10px; margin-bottom:18px; }
+  .mode-card{
+    display:flex; align-items:center; gap:14px; text-align:left; width:100%;
+    background: var(--surface); border:1.5px solid var(--line); border-radius: var(--radius-md);
+    padding:16px 18px; box-shadow: 0 10px 24px rgba(0,0,0,0.2);
+    transition: transform .15s ease, border-color .15s ease, box-shadow .15s ease;
+  }
+  .mode-card:hover{ transform: translateY(-2px); border-color: var(--amber); box-shadow: 0 14px 30px rgba(0,0,0,0.3); }
+  .mode-card:active{ transform: translateY(0); }
+  .mode-icon{ font-size:28px; flex-shrink:0; width:48px; height:48px; border-radius:14px; background: var(--surface-2); display:flex; align-items:center; justify-content:center; }
+  .mode-text{ flex:1; display:flex; flex-direction:column; gap:2px; min-width:0; }
+  .mode-title{ font-family:'Righteous',sans-serif; font-size:16px; color: var(--cream); }
+  .mode-desc{ font-family:'Manrope',sans-serif; font-size:12.5px; color: var(--muted); line-height:1.4; }
+  .mode-arrow{ font-size:18px; color: var(--amber); flex-shrink:0; }
+
+  .back-link{
+    background:none; border:none; color: var(--muted); font-family:'Manrope',sans-serif;
+    font-size:13px; cursor:pointer; padding:4px 0 14px; display:inline-flex; align-items:center; gap:4px;
+  }
+  .back-link:hover{ color: var(--cream); }
+  .back-link:focus-visible{ outline: 2px solid var(--amber); outline-offset:2px; }
+
+  input[type=text]{
+    background: #100a19; border: 1.5px solid var(--line); color: var(--cream);
+    font-family:'Manrope',sans-serif; font-size:14.5px; padding:11px 12px; border-radius: var(--radius-sm); outline:none; width:100%;
+  }
+  input[type=text]:focus-visible{ border-color: var(--amber); box-shadow: 0 0 0 3px rgba(255,194,75,0.22); }
+
+  textarea{
+    background: #100a19; border: 1.5px solid var(--line); color: var(--cream);
+    font-family:'Manrope',sans-serif; font-size:13.5px; padding:11px 12px; border-radius: var(--radius-sm);
+    outline:none; width:100%; resize:vertical; line-height:1.5;
+  }
+  textarea:focus-visible{ border-color: var(--amber); box-shadow: 0 0 0 3px rgba(255,194,75,0.22); }
+
+  .templates-box{
+    background: var(--surface-2); border:1px solid var(--line); border-radius: var(--radius-md);
+    padding:14px; margin-bottom:16px;
+  }
+  #bulk-add-panel{ margin-top:10px; }
+
+  .input-icon-group{ position:relative; }
+  .input-icon-group input[type=text]{ padding-left:38px; }
+  .input-icon{
+    position:absolute; left:11px; top:50%; transform:translateY(-50%);
+    font-size:13px; width:20px; height:20px; border-radius:50%;
+    display:flex; align-items:center; justify-content:center; pointer-events:none;
+  }
+  .input-icon-group.yt .input-icon{ background:#FF3E3E22; color:#FF6B6B; }
+  .input-icon-group.sp .input-icon{ background:#1DB95422; color:#1ED760; }
+
+  .spinner-row{
+    display:flex; align-items:center; gap:8px; color: var(--amber); font-size:13px; font-weight:700;
+    font-family:'Manrope',sans-serif;
+  }
+  .spinner{
+    width:14px; height:14px; border-radius:50%; flex-shrink:0;
+    border:2px solid rgba(255,194,75,0.25); border-top-color: var(--amber);
+  }
+  @media (prefers-reduced-motion: no-preference){ .spinner{ animation: spin 0.7s linear infinite; } }
+  @keyframes spin{ to{ transform: rotate(360deg); } }
+
+  .lib-list{ display:flex; flex-direction:column; gap:8px; margin-bottom:16px; }
+  .lib-row{
+    display:flex; align-items:flex-start; gap:14px; background: var(--surface-2); border-radius: var(--radius-md);
+    padding:14px; transition: background .15s ease;
+  }
+  .lib-row:hover{ background: #33204a; }
+  .lib-row.just-added{ animation: justAdded 1.1s ease; }
+  @keyframes justAdded{
+    0%{ box-shadow: 0 0 0 2px var(--amber); background: rgba(255,194,75,0.16); }
+    100%{ box-shadow: 0 0 0 0 rgba(255,194,75,0); background: var(--surface-2); }
+  }
+  @media (prefers-reduced-motion: reduce){ .lib-row.just-added{ animation:none; } }
+  .lib-row img{ width:64px; height:64px; object-fit:cover; border-radius:10px; background:#111; flex-shrink:0; margin-top:2px; }
+  .lib-row .meta{ flex:1; min-width:0; }
+  .lib-row .artist{ font-weight:800; font-size:14.5px; }
+  .lib-row .title{ color: var(--muted); font-size:12.5px; }
+  .lib-row [contenteditable]{ cursor:text; border-radius:4px; padding:1px 4px; margin:-1px -4px; }
+  .lib-row [contenteditable]:hover{ background: rgba(255,194,75,0.10); }
+  .lib-row [contenteditable]:focus{ background: rgba(255,194,75,0.16); outline:1.5px solid var(--amber); }
+  .lib-row .title[contenteditable]:empty::before{ content: attr(data-placeholder); color: var(--muted); opacity:0.55; }
+  .lib-row .cat-badge{
+    font-size:10.5px; font-weight:700; color: var(--bg); background: var(--amber);
+    padding:2px 8px; border-radius:999px; display:inline-block; margin-top:3px;
+  }
+  .platform-badge{
+    font-size:9.5px; font-weight:800; padding:2px 7px; border-radius:999px; display:inline-block;
+    margin-top:3px; margin-right:4px; letter-spacing:0.02em;
+  }
+  .platform-badge.yt{ background:#FF3E3E22; color:#FF6B6B; }
+  .platform-badge.sp{ background:#1DB95422; color:#1ED760; }
+  .playlist-pills{ display:flex; flex-wrap:wrap; gap:5px; margin-top:8px; }
+  .lib-controls{ margin-top:8px; padding-top:8px; border-top:1px solid var(--line); }
+  .add-playlist-row{ display:flex; gap:6px; margin-top:6px; }
+  .add-playlist-row input{ font-size:12.5px; padding:7px 9px; }
+  .add-playlist-row button{ flex-shrink:0; padding:7px 13px; font-size:12px; }
+  .lib-row button.del{ background:none; border:none; color: var(--muted); font-size:18px; cursor:pointer; padding:8px; border-radius:8px; flex-shrink:0; align-self:flex-start; }
+  .lib-row button.del:hover{ color: var(--pink); background: rgba(255,62,127,0.14); }
+  .playlist-pill{
+    font-size:10px; font-weight:700; color: var(--bg); background: var(--amber);
+    padding:2px 6px 2px 8px; border-radius:999px; display:inline-flex; align-items:center; gap:4px;
+  }
+  .playlist-pill button{
+    background:none; border:none; color: var(--bg); font-family:'Manrope'; font-size:12px;
+    cursor:pointer; padding:0; line-height:1; opacity:0.7;
+  }
+  .playlist-pill button:hover{ opacity:1; }
+
+  .empty-hint{
+    color: var(--muted); font-size:13.5px; text-align:center; padding:22px 14px;
+    border:1.5px dashed var(--line); border-radius: var(--radius-md); margin-bottom:16px; line-height:1.6;
+  }
+
+  .add-grid{ display:grid; grid-template-columns: 1fr 1fr; gap:8px; margin-bottom:8px; }
+  .add-grid .full{ grid-column: 1 / -1; }
+  @media (max-width:560px){ .add-grid{ grid-template-columns: 1fr; } }
+  .field-label{ font-size:11px; color: var(--muted); font-weight:700; margin-bottom:4px; display:block; }
+  .form-error{ color: var(--pink); font-size:13px; margin: 4px 0 6px; min-height:16px; }
+
+  .chip-row{ display:flex; flex-wrap:wrap; gap:8px; margin-bottom:14px; }
+  .chip{
+    font-family:'Manrope',sans-serif; font-size:13px; font-weight:700; color: var(--muted);
+    background: var(--surface-2); border:1.5px solid var(--line); border-radius: 999px;
+    padding:7px 14px; cursor:pointer; transition: all .15s ease;
+  }
+  .chip:hover{ border-color: var(--amber); transform: translateY(-1px); }
+  .chip.active{ background: var(--amber); color: var(--bg); border-color: var(--amber); }
+  .chip:focus-visible{ outline:2px solid var(--amber); outline-offset:2px; }
+
+  button{ font-family:'Righteous', sans-serif; cursor:pointer; }
+  button:focus-visible{ outline: 3px solid var(--amber); outline-offset: 2px; }
+  .btn{
+    border:none; border-radius: 999px; padding: 13px 22px; font-size:15px; letter-spacing:0.01em;
+    color: var(--bg); background: var(--amber); transition: transform 0.12s ease, filter 0.12s ease, box-shadow .12s ease;
+    box-shadow: 0 8px 20px rgba(255,194,75,0.22);
+  }
+  .btn:hover{ filter: brightness(1.08); transform: translateY(-2px); box-shadow: 0 12px 26px rgba(255,194,75,0.3); }
+  .btn:active{ transform: translateY(0); }
+  .btn.secondary{ background: transparent; color: var(--cream); border: 1.5px solid var(--line); box-shadow:none; }
+  .btn.small{ padding: 9px 16px; font-size:13.5px; background: var(--surface-2); color: var(--cream); border:1px solid var(--line); box-shadow:none; }
+  .btn:disabled{ opacity:0.4; cursor:not-allowed; filter:none; transform:none; box-shadow:none; }
+  .btn-row{ display:flex; gap:10px; flex-wrap:wrap; justify-content:center; }
+  .btn.full{ width:100%; }
+  .start-hint{ text-align:center; color: var(--muted); font-size:13px; margin-top:10px; font-family:'Manrope',sans-serif; }
+
+  .round-header{ text-align:center; margin-bottom:14px; }
+  .round-header .round-name{
+    font-family:'Righteous',sans-serif; font-size:22px; color:var(--amber);
+    text-shadow:0 0 16px rgba(255,194,75,0.35);
+  }
+  .round-header .match-progress{ color:var(--muted); font-size:12.5px; font-family:'Manrope'; margin-top:2px; }
+
+  /* --- Duel arena --- */
+  .duel-arena{ max-width:420px; margin:0 auto; }
+  .match-transition{ animation: matchIn 0.45s cubic-bezier(.22,.8,.25,1); }
+  @keyframes matchIn{
+    0%{ opacity:0; transform: translateX(28px) scale(0.97); }
+    100%{ opacity:1; transform: translateX(0) scale(1); }
+  }
+  @media (prefers-reduced-motion: reduce){ .match-transition{ animation:none; } }
+  .song-card{
+    background: var(--surface); border:2px solid var(--line); padding:20px; text-align:center;
+    transition: border-color .2s ease, box-shadow .2s ease; position:relative;
+  }
+  .song-card.top{ border-radius: var(--radius-lg) var(--radius-lg) 0 0; }
+  .song-card.bottom{ border-radius: 0 0 var(--radius-lg) var(--radius-lg); border-top:none; }
+  .song-card.playing{ border-color: var(--amber); box-shadow: inset 0 0 0 1px var(--amber); }
+  .song-card .artist{ font-family:'Righteous', sans-serif; font-size:19px; line-height:1.25; }
+  .song-card .title{ color: var(--muted); font-size:12.5px; font-style:italic; margin-top:3px; }
+  .song-card .cat-badge{
+    font-size:10px; font-weight:700; color: var(--bg); background: var(--amber);
+    padding:2px 9px; border-radius:999px; display:inline-block; margin-top:6px;
+  }
+  .song-card .listen-btn{ margin-top:12px; }
+
+  .vs-badge{
+    width:48px; height:48px; border-radius:50%; background: var(--bg); border:3px solid var(--amber);
+    color: var(--amber); font-family:'Righteous',sans-serif; font-size:14px;
+    display:flex; align-items:center; justify-content:center;
+    margin: -15px auto; position:relative; z-index:2; box-shadow: 0 4px 14px rgba(0,0,0,0.4);
+  }
+
+  .video-stage{
+    max-width:420px; margin:18px auto 0; aspect-ratio:16/9; background:#000; border-radius: 16px;
+    overflow:hidden; position:relative; box-shadow: 0 15px 35px rgba(0,0,0,0.4), inset 0 0 0 2px rgba(255,255,255,0.05);
+    transition: aspect-ratio .2s ease;
+  }
+  .video-stage.spotify-mode{ aspect-ratio: unset; height:160px; background: var(--surface-2); }
+  .video-stage iframe{ position:absolute; inset:0; width:100%; height:100%; border:0; }
+  .video-stage .placeholder{
+    position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+    color: var(--muted); font-size:13px; text-align:center; padding:20px;
+  }
+
+  .vote-section{ margin-top:18px; }
+  .vote-timer{
+    text-align:center; font-family:'Righteous',sans-serif; font-size:28px; color: var(--cyan);
+    margin-bottom:12px; transition: color .2s ease;
+  }
+  .vote-timer.urgent{ color: var(--pink); }
+  @media (prefers-reduced-motion: no-preference){
+    .vote-timer.urgent{ animation: timerPulse 0.6s ease-in-out infinite; }
+  }
+  @keyframes timerPulse{ 0%,100%{ transform:scale(1); } 50%{ transform:scale(1.08); } }
+  .vote-row{ display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+  .vote-card{ background: var(--surface-2); border:2px solid var(--line); border-radius: var(--radius-md); padding:16px 10px; text-align:center; }
+  .vote-card .vc-label{ font-size:12px; color: var(--muted); font-weight:700; margin-bottom:8px; min-height:32px; display:flex; align-items:center; justify-content:center; }
+  .vote-card .vc-count{ font-family:'Righteous',sans-serif; font-size:38px; line-height:1; }
+  .vote-card.left .vc-count{ color: var(--pink); }
+  .vote-card.right .vc-count{ color: var(--cyan); }
+  .vote-card button{ width:100%; margin-top:10px; }
+  .vote-card.left button{ background: var(--pink); color:#fff; }
+  .vote-card.right button{ background: var(--cyan); color:#0c1f1c; }
+
+  .vote-controls-row{ display:flex; justify-content:center; gap:10px; margin-top:14px; flex-wrap:wrap; }
+
+  .tiebreak-box{
+    text-align:center; background: var(--surface-2); border:2px dashed var(--amber);
+    border-radius: var(--radius-md); padding:18px; margin-top:16px;
+  }
+  .tiebreak-box .tb-title{ font-family:'Righteous',sans-serif; font-size:17px; color: var(--amber); margin-bottom:4px; }
+  .tiebreak-box .tb-sub{ color: var(--muted); font-size:13px; margin-bottom:14px; }
+  .tiebreak-box .btn-row .btn{ flex:1; min-width:130px; }
+
+  .winner-banner{
+    text-align:center; margin-top:16px; padding:16px; background: var(--surface-2);
+    border-radius: var(--radius-md); border:1px solid var(--line);
+  }
+  .winner-banner .wb-label{ font-size:11px; color: var(--muted); font-weight:700; text-transform:uppercase; letter-spacing:0.08em; }
+  .winner-banner .wb-name{ font-family:'Righteous',sans-serif; font-size:22px; color: var(--amber); margin-top:4px; }
+
+  .next-row{ display:flex; justify-content:center; margin-top:14px; }
+
+  .history-box{ margin-top:22px; }
+  .history-box h3{ font-family:'Manrope'; font-size:13px; color: var(--muted); font-weight:800; text-transform:uppercase; letter-spacing:0.06em; margin-bottom:10px; }
+
+  .bracket-tree{ display:flex; flex-direction:column; gap:16px; }
+  .bracket-round-title{
+    font-family:'Righteous',sans-serif; font-size:13px; color: var(--amber);
+    text-transform:uppercase; letter-spacing:0.05em; margin-bottom:8px;
+  }
+  .bracket-matches{ display:flex; flex-wrap:wrap; gap:8px; }
+  .bracket-match{
+    display:flex; flex-direction:column; gap:3px; background: var(--surface-2);
+    border:1.5px solid var(--line); border-radius: var(--radius-sm); padding:6px; flex:1; min-width:150px;
+    transition: border-color .2s ease, box-shadow .2s ease;
+  }
+  .bracket-match.current{ border-color: var(--amber); box-shadow: 0 0 0 2px rgba(255,194,75,0.25); }
+  @media (prefers-reduced-motion: no-preference){
+    .bracket-match.current{ animation: bracketPulse 1.6s ease-in-out infinite; }
+  }
+  @keyframes bracketPulse{
+    0%,100%{ box-shadow: 0 0 0 2px rgba(255,194,75,0.25); }
+    50%{ box-shadow: 0 0 0 5px rgba(255,194,75,0.12); }
+  }
+  .bracket-slot{
+    display:flex; align-items:center; gap:7px; padding:4px 6px; border-radius:7px; font-size:11.5px;
+    transition: opacity .2s ease;
+  }
+  .bracket-slot img{ width:22px; height:22px; border-radius:5px; object-fit:cover; flex-shrink:0; }
+  .bracket-slot-noimg{
+    width:22px; height:22px; border-radius:5px; background: var(--surface); flex-shrink:0;
+    display:flex; align-items:center; justify-content:center; font-size:11px;
+  }
+  .bracket-slot span{ white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .bracket-slot.tbd{ color: var(--muted); font-style:italic; opacity:0.6; }
+  .bracket-slot.tbd .bracket-slot-noimg{ background:none; }
+  .bracket-slot.winner{ background: rgba(255,194,75,0.16); font-weight:800; color: var(--amber); }
+  .bracket-slot.loser{ opacity:0.4; }
+
+  /* --- End screen --- */
+  .end-panel{ text-align:center; }
+  .trophy{ font-size:54px; margin-bottom:6px; }
+  .champion-name{ font-family:'Righteous',sans-serif; font-size:24px; color: var(--amber); margin:6px 0 2px; }
+  .champion-title{ color: var(--muted); font-size:14px; font-style:italic; margin-bottom:14px; }
+
+  .footer-note{ text-align:center; color: var(--muted); font-size:12px; margin-top: 22px; }
+
+  /* --- Top navigation --- */
+  .top-nav{
+    display:flex; justify-content:center; gap:8px; margin-bottom:22px; flex-wrap:wrap;
+  }
+  .top-nav button{
+    font-family:'Manrope',sans-serif; font-weight:800; font-size:13.5px;
+    background: var(--surface); border:1.5px solid var(--line); color: var(--muted);
+    padding:9px 18px; border-radius:999px; cursor:pointer; transition: all .15s ease;
+  }
+  .top-nav button:hover{ border-color: var(--amber); color: var(--cream); }
+  .top-nav button.active{ background: var(--amber); color: var(--bg); border-color: var(--amber); }
+  .top-nav button:focus-visible{ outline:2px solid var(--amber); outline-offset:2px; }
+
+  /* --- Hall of Fame page --- */
+  .hof-list{ display:flex; flex-direction:column; gap:10px; }
+  .hof-row{
+    display:flex; align-items:center; gap:14px; background: var(--surface-2);
+    border-radius: var(--radius-md); padding:14px 16px;
+  }
+  .hof-row .rank{ font-family:'Righteous',sans-serif; font-size:20px; color: var(--muted); width:34px; text-align:center; flex-shrink:0; }
+  .hof-row.rank-1 .rank, .hof-row.rank-2 .rank, .hof-row.rank-3 .rank{ font-size:26px; }
+  .hof-row .hof-meta{ flex:1; min-width:0; }
+  .hof-row .hof-artist{ font-family:'Righteous',sans-serif; font-size:16.5px; }
+  .hof-row .hof-title{ color: var(--muted); font-size:12.5px; font-style:italic; }
+  .hof-row .hof-wins{ font-family:'Righteous',sans-serif; font-size:20px; color: var(--amber); flex-shrink:0; }
+</style>
+</head>
+<body>
+<div id="app">
+
+  <header class="hero">
+    <span class="eyebrow">Für beliebig viele Leute</span>
+    <h1>🎶 SONG BATTLE</h1>
+    <p>Zwei Songs treten an. Abstimmen, wer gewinnt — bis ein Sieger übrig bleibt.</p>
+  </header>
+
+  <!-- MODE SELECT (only shown when Firebase is configured) -->
+  <!-- LANDING (brand new first page, shown when Firebase is configured) -->
+  <section id="screen-landing" class="screen">
+    <div class="panel" style="text-align:center;">
+      <h2 style="justify-content:center;">🎶 Los geht's!</h2>
+      <p class="sub">Neues Spiel starten oder bei einem laufenden mitmachen?</p>
+    </div>
+    <div class="mode-cards">
+      <button class="mode-card" id="landing-create-btn">
+        <span class="mode-icon">🎮</span>
+        <span class="mode-text"><span class="mode-title">Spiel erstellen</span><span class="mode-desc">Regeln festlegen, Songs sammeln und ein neues Turnier starten</span></span>
+        <span class="mode-arrow">→</span>
+      </button>
+      <button class="mode-card" id="landing-join-btn">
+        <span class="mode-icon">🎟️</span>
+        <span class="mode-text"><span class="mode-title">Spiel beitreten</span><span class="mode-desc">Raum-Code eingeben und von deinem Handy abstimmen</span></span>
+        <span class="mode-arrow">→</span>
+      </button>
+    </div>
+  </section>
+
+  <!-- MODE SELECT: online vs offline, only reached via "Spiel erstellen" -->
+  <section id="screen-mode-select" class="screen">
+    <button class="back-link" data-back="landing">← Zurück</button>
+    <div class="panel" style="text-align:center;">
+      <h2 style="justify-content:center;">Wie soll das Turnier laufen?</h2>
+      <p class="sub">Alle an einem Handy, oder soll jeder von seinem eigenen mitstimmen?</p>
+    </div>
+    <div class="mode-cards">
+      <button class="mode-card" id="mode-host-btn">
+        <span class="mode-icon">🎤</span>
+        <span class="mode-text"><span class="mode-title">Online</span><span class="mode-desc">Regeln festlegen, Songs sammeln, andere stimmen per Handy ab</span></span>
+        <span class="mode-arrow">→</span>
+      </button>
+      <button class="mode-card" id="mode-offline-btn">
+        <span class="mode-icon">📴</span>
+        <span class="mode-text"><span class="mode-title">Ohne Internet</span><span class="mode-desc">Alle an einem Handy, kein Setup nötig</span></span>
+        <span class="mode-arrow">→</span>
+      </button>
+    </div>
+  </section>
+
+  <!-- JOIN (voter enters room code) -->
+  <section id="screen-join" class="screen">
+    <button class="back-link" data-back="landing">← Zurück</button>
+    <div class="panel" style="text-align:center;">
+      <h2>Mitspielen</h2>
+      <p class="sub">Gib den Raum-Code ein, den der Host gerade anzeigt.</p>
+      <input type="text" id="join-code-input" placeholder="z.B. 4821" inputmode="numeric" maxlength="4" style="text-align:center; font-size:22px; letter-spacing:0.25em; margin-bottom:10px;">
+      <input type="text" id="join-name-input" placeholder="Dein Name" maxlength="20" style="text-align:center;">
+      <div class="form-error" id="join-form-error"></div>
+      <div class="btn-row" style="margin-top:12px;">
+        <button class="btn full" id="join-room-btn">Beitreten</button>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- VOTER GAME VIEW -->
+  <section id="screen-voter-game" class="screen">
+    <button class="back-link" data-back="landing">← Verlassen</button>
+    <div class="round-header">
+      <div class="round-name" id="voter-round-name">–</div>
+      <div class="match-progress" id="voter-match-progress"></div>
+    </div>
+    <div class="duel-arena">
+      <div class="song-card top">
+        <div class="artist" id="voter-artist-a">–</div>
+        <div class="title" id="voter-title-a"></div>
+      </div>
+      <div class="vs-badge">VS</div>
+      <div class="song-card bottom">
+        <div class="artist" id="voter-artist-b">–</div>
+        <div class="title" id="voter-title-b"></div>
+      </div>
+    </div>
+    <p class="start-hint" id="voter-waiting" style="margin-top:18px;">⏳ Warte, bis der Host die Abstimmung startet …</p>
+    <div class="vote-row" id="voter-vote-row" style="display:none; margin-top:18px;">
+      <div class="vote-card left"><button id="voter-vote-a-btn">👍 Stimme</button></div>
+      <div class="vote-card right"><button id="voter-vote-b-btn">👍 Stimme</button></div>
+    </div>
+    <p class="start-hint" id="voter-voted-msg" style="display:none; margin-top:18px;">✅ Stimme abgegeben — warte auf das nächste Duell …</p>
+    <div class="winner-banner" id="voter-ended-msg" style="display:none;"></div>
+  </section>
+
+  <!-- TEMPLATE CHOICE (shown right after Online/Offline) -->
+  <section id="screen-template-choice" class="screen">
+    <button class="back-link" data-back="mode-select">← Zurück</button>
+    <div class="panel" style="text-align:center;">
+      <h2 style="justify-content:center;">Vorlage nutzen?</h2>
+      <p class="sub">Fertiges Song-Set laden oder selbst zusammenstellen?</p>
+    </div>
+    <div class="mode-cards" id="template-choice-cards"></div>
+  </section>
+
+  <!-- RULES (step 1) -->
+  <section id="screen-rules" class="screen">
+    <button class="back-link" id="rules-back-link" data-back="template-choice" style="display:none;">← Zurück</button>
+
+    <div class="hof-strip" id="rules-room-banner" style="display:none;">
+      📡 Raum-Code: <b id="rules-room-code-value">----</b>
+    </div>
+    <div class="participants-box" id="rules-participants-box" style="display:none;"></div>
+
+    <div class="panel">
+      <h2><span class="step-badge">1</span> Spielregeln</h2>
+      <p class="sub">Erst festlegen, wie groß das Turnier wird und wie lange abgestimmt wird — danach wisst ihr genau, wie viele Songs ihr braucht.</p>
+
+      <span class="field-label">Wie viele Runden?</span>
+      <div class="chip-row" id="size-chips"></div>
+
+      <span class="field-label">Abstimmungszeit</span>
+      <div class="chip-row" id="time-chips"></div>
+
+      <span class="field-label">Playlists</span>
+      <div class="chip-row" id="category-chips"></div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn full" id="rules-next-btn">Weiter →</button>
+    </div>
+  </section>
+
+  <!-- LIBRARY (step 2) -->
+  <section id="screen-library" class="screen">
+    <button class="back-link" data-back="rules">← Zurück</button>
+
+    <div class="hof-strip" id="library-room-banner" style="display:none;">
+      📡 Raum-Code: <b id="library-room-code-value">----</b>
+    </div>
+    <div class="participants-box" id="library-participants-box" style="display:none;"></div>
+
+    <div class="panel">
+      <h2><span class="step-badge">2</span> Song-Bibliothek</h2>
+      <p class="sub">Nur eins der beiden Felder ausfüllen — Interpret &amp; Titel werden automatisch geladen.</p>
+
+      <div class="templates-box">
+        <span class="field-label">📋 Vorlagen — fertige Song-Sets laden</span>
+        <div class="chip-row" id="template-chips"></div>
+        <div class="btn-row" style="justify-content:flex-start; margin-top:4px;">
+          <button class="btn small" id="save-template-btn">💾 Aktuelle Bibliothek als Vorlage speichern</button>
+        </div>
+        <div class="form-error" id="template-msg"></div>
+      </div>
+
+      <div id="lib-list" class="lib-list"></div>
+      <div id="lib-empty-hint" class="empty-hint" style="display:none;"></div>
+
+      <div class="add-grid">
+        <div class="full">
+          <span class="field-label">YouTube-Link</span>
+          <div class="input-icon-group yt">
+            <span class="input-icon">▶</span>
+            <input type="text" id="new-youtube-link" placeholder="https://youtube.com/watch?v=...">
+          </div>
+        </div>
+        <div class="full">
+          <span class="field-label">Spotify-Link</span>
+          <div class="input-icon-group sp">
+            <span class="input-icon">♪</span>
+            <input type="text" id="new-spotify-link" placeholder="https://open.spotify.com/track/...">
+          </div>
+        </div>
+        <div class="spinner-row" id="link-fetch-status" style="display:none;"><span class="spinner"></span> Song-Infos werden geladen …</div>
+        <datalist id="playlist-suggestions"></datalist>
+      </div>
+      <div class="form-error" id="lib-form-error"></div>
+      <div class="btn-row" style="justify-content:flex-start;">
+        <button class="btn small" id="lib-add-btn">➕ Song hinzufügen</button>
+      </div>
+
+      <button class="back-link" id="bulk-toggle-btn" style="margin-top:14px;">📋 Mehrere Links auf einmal einfügen ▾</button>
+      <div id="bulk-add-panel" style="display:none;">
+        <textarea id="bulk-links-input" rows="4" placeholder="Einen Link pro Zeile — YouTube und Spotify gemischt möglich"></textarea>
+        <div class="btn-row" style="justify-content:flex-start; margin-top:8px;">
+          <button class="btn small" id="bulk-add-btn">➕ Alle hinzufügen</button>
+        </div>
+        <div class="spinner-row" id="bulk-status" style="display:none;"></div>
+        <div class="form-error" id="bulk-msg"></div>
+      </div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn full" id="start-tournament-btn">🎤 Turnier starten</button>
+    </div>
+    <p class="start-hint" id="start-hint"></p>
+  </section>
+
+  <!-- GAME -->
+  <section id="screen-game" class="screen">
+    <button class="back-link" data-back="landing">🏠 Turnier verlassen</button>
+    <div class="hof-strip" id="room-banner" style="display:none;">
+      📡 Raum-Code: <b id="room-code-value">----</b> — andere können unter „Mitspielen" beitreten
+    </div>
+    <div class="participants-box" id="game-participants-box" style="display:none;"></div>
+    <div class="round-header" id="round-header-anim">
+      <div class="round-name" id="round-name">Finale</div>
+      <div class="match-progress" id="match-progress">Duell 1 von 1</div>
+    </div>
+
+    <div class="duel-arena" id="duel-arena-el">
+      <div class="song-card top" id="card-a">
+        <div class="artist" id="card-a-artist">Artist A</div>
+        <div class="title" id="card-a-title"></div>
+        <div class="cat-badge" id="card-a-cat" style="display:none;"></div>
+        <div><button class="btn small listen-btn" id="listen-a-btn">▶️ Anhören</button></div>
+      </div>
+      <div class="vs-badge">VS</div>
+      <div class="song-card bottom" id="card-b">
+        <div class="artist" id="card-b-artist">Artist B</div>
+        <div class="title" id="card-b-title"></div>
+        <div class="cat-badge" id="card-b-cat" style="display:none;"></div>
+        <div><button class="btn small listen-btn" id="listen-b-btn">▶️ Anhören</button></div>
+      </div>
+    </div>
+
+    <div class="video-stage" id="video-stage">
+      <div class="placeholder" id="video-placeholder">🎧 Tippt auf „Anhören", um einen Song zu spielen</div>
+      <iframe id="yt-player" allow="autoplay; encrypted-media" title="Song Player" style="display:none;"></iframe>
+      <iframe id="spotify-player" allow="clipboard-write; encrypted-media; fullscreen; picture-in-picture" title="Spotify Player" style="display:none;"></iframe>
+    </div>
+    <p class="start-hint" id="spotify-hint" style="display:none;">🟢 Spotify: Play-Button im Player antippen — Autoplay unterstützt Spotify nicht.</p>
+
+    <div class="vote-section" id="vote-section" style="display:none;">
+      <div class="vote-timer" id="vote-timer" style="display:none;">⏱ <span id="vote-timer-num">30</span>s</div>
+      <p class="start-hint" id="online-vote-note" style="display:none;">📱 Läuft übers Handy — jede Person stimmt in der Mitspielen-Ansicht ab.</p>
+      <div class="vote-row">
+        <div class="vote-card left">
+          <div class="vc-label" id="vote-label-a">Artist A</div>
+          <div class="vc-count" id="vote-count-a">0</div>
+          <button id="vote-a-btn">👍 Stimme</button>
+        </div>
+        <div class="vote-card right">
+          <div class="vc-label" id="vote-label-b">Artist B</div>
+          <div class="vc-count" id="vote-count-b">0</div>
+          <button id="vote-b-btn">👍 Stimme</button>
+        </div>
+      </div>
+      <div class="vote-controls-row">
+        <button class="btn small" id="vote-reset-btn">↺ Zurücksetzen</button>
+        <button class="btn" id="vote-end-btn">✅ Abstimmung beenden</button>
+      </div>
+    </div>
+
+    <div class="btn-row" id="start-vote-row" style="margin-top:16px;">
+      <button class="btn full" id="start-vote-btn">🗳️ Abstimmung starten</button>
+    </div>
+
+    <div class="tiebreak-box" id="tiebreak-box" style="display:none;">
+      <div class="tb-title">🤝 Gleichstand!</div>
+      <div class="tb-sub" id="tiebreak-score">1 : 1 — Macht Schere, Stein, Papier. Wer gewinnt?</div>
+      <div class="btn-row">
+        <button class="btn" id="tiebreak-a-btn"></button>
+        <button class="btn" id="tiebreak-b-btn"></button>
+      </div>
+    </div>
+
+    <div class="winner-banner" id="winner-banner" style="display:none;">
+      <div class="wb-label">Sieger des Duells</div>
+      <div class="wb-name" id="winner-name"></div>
+    </div>
+
+    <div class="next-row" id="next-row" style="display:none;">
+      <button class="btn" id="next-match-btn">Nächstes Duell ➡</button>
+    </div>
+
+    <div class="history-box" id="history-box" style="display:none;">
+      <h3>🏆 Turnierbaum</h3>
+      <div class="bracket-tree" id="bracket-tree"></div>
+    </div>
+  </section>
+
+  <!-- END -->
+  <section id="screen-end" class="screen">
+    <div class="panel end-panel">
+      <div class="trophy">🏆</div>
+      <h2>Turniersieger!</h2>
+      <div class="champion-name" id="champion-artist"></div>
+      <div class="champion-title" id="champion-title"></div>
+
+      <div class="history-box" style="text-align:left;">
+        <h3>Turnierbaum</h3>
+        <div class="bracket-tree" id="end-bracket-tree"></div>
+      </div>
+
+      <div class="btn-row" style="margin-top:16px;">
+        <button class="btn" id="new-tournament-btn">🔄 Neues Turnier</button>
+        <button class="btn secondary" id="edit-lib-btn">⚙️ Bibliothek bearbeiten</button>
+      </div>
+      <div class="btn-row" style="margin-top:10px;">
+        <button class="back-link" data-back="landing">🏠 Zur Startseite</button>
+      </div>
+    </div>
+  </section>
+
+
+
+</div>
+
+<!-- ============================================================
+     MEHRSPIELER-MODUS (optional): Firebase Realtime Database
+     Ohne eigenes Firebase-Projekt läuft die App normal weiter —
+     alle an einem Handy, wie bisher. Trägst du unten deine eigenen
+     Werte ein (aus der Firebase Console, siehe Chat-Anleitung),
+     schaltet sich automatisch der Host/Mitspielen-Modus frei.
+     ============================================================ -->
+<script src="https://www.gstatic.com/firebasejs/12.15.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/12.15.0/firebase-database-compat.js"></script>
+<script>
+  const firebaseConfig = {
+    apiKey: "AIzaSyA2g7zawHSDIrWt37VPk4To8bxrRvU8mE8",
+    authDomain: "song-battle-a8456.firebaseapp.com",
+    databaseURL: "https://song-battle-a8456-default-rtdb.europe-west1.firebasedatabase.app",
+    projectId: "song-battle-a8456"
+  };
+  window.__fb = { db: null, ready: false };
+  try{
+    if(firebaseConfig.apiKey && firebaseConfig.apiKey !== 'DEIN_API_KEY' && typeof firebase !== 'undefined'){
+      firebase.initializeApp(firebaseConfig);
+      window.__fb.db = firebase.database();
+      window.__fb.ready = true;
+    }
+  }catch(e){
+    console.error('Firebase-Init fehlgeschlagen — App läuft im Einzelgerät-Modus weiter.', e);
+    window.__fb.ready = false;
+  }
+</script>
+
+<script>
+(function(){
+  const KEY_LIBRARY = 'song-battle-library-v1';
+  const KEY_HOF = 'song-duel-hof-v1';
+  const KEY_TEMPLATES = 'song-battle-templates-v1';
+
+  const SEED_LIBRARY = [];
+
+  const SEED_TEMPLATES = {
+    'Linkin Park': [
+      { artist:'Linkin Park', title:'In the End', videoId:'oIwWqYSbzGA', spotifyId:null, spotifyThumb:null, categories:['Linkin Park'] },
+      { artist:'Linkin Park', title:'Numb', videoId:'8Jwj_lpwnZk', spotifyId:null, spotifyThumb:null, categories:['Linkin Park'] },
+      { artist:'Linkin Park', title:"What I've Done", videoId:'pMePM9Q-bYk', spotifyId:null, spotifyThumb:null, categories:['Linkin Park'] },
+      { artist:'Linkin Park', title:'Faint', videoId:'LYU-8IFcDPw', spotifyId:null, spotifyThumb:null, categories:['Linkin Park'] },
+      { artist:'Linkin Park', title:'Crawling', videoId:'Gd9OhYroLN0', spotifyId:null, spotifyThumb:null, categories:['Linkin Park'] },
+      { artist:'Linkin Park', title:'Somewhere I Belong', videoId:'zsCD5XCu6CM', spotifyId:null, spotifyThumb:null, categories:['Linkin Park'] },
+      { artist:'Linkin Park', title:'The Catalyst', videoId:'51iquRYKPbs', spotifyId:null, spotifyThumb:null, categories:['Linkin Park'] },
+      { artist:'Linkin Park', title:'Papercut', videoId:'vjVkXlxsO8Q', spotifyId:null, spotifyThumb:null, categories:['Linkin Park'] },
+      { artist:'Linkin Park', title:'Breaking the Habit', videoId:'v2H4l9RpkwM', spotifyId:null, spotifyThumb:null, categories:['Linkin Park'] },
+      { artist:'Linkin Park', title:'Bleed It Out', videoId:'jmSIGT31_-c', spotifyId:null, spotifyThumb:null, categories:['Linkin Park'] },
+      { artist:'Linkin Park', title:'One Step Closer', videoId:'pmUTBDuUGz8', spotifyId:null, spotifyThumb:null, categories:['Linkin Park'] },
+      { artist:'Linkin Park', title:'Shadow of the Day', videoId:'3g8v45du-ZA', spotifyId:null, spotifyThumb:null, categories:['Linkin Park'] },
+      { artist:'Linkin Park', title:'New Divide', videoId:'ysSxxIqKNN0', spotifyId:null, spotifyThumb:null, categories:['Linkin Park'] },
+      { artist:'Linkin Park', title:'Waiting for the End', videoId:'5qF_qbaWt3Q', spotifyId:null, spotifyThumb:null, categories:['Linkin Park'] },
+      { artist:'Linkin Park', title:'Given Up', videoId:'7y5NJgyEGcM', spotifyId:null, spotifyThumb:null, categories:['Linkin Park'] }
+    ]
+  };
+
+  const ROUND_NAMES_FROM_FINAL = ['Finale','Halbfinale','Viertelfinale','Achtelfinale','Sechzehntelfinale','Zweiunddreißigstelfinale'];
+
+  let state = {
+    library: [],
+    templates: {},
+    hallOfFame: {},
+    filterCategories: new Set(),
+    bracketSize: null,
+    voteTimeLimit: null,
+    voteTimerInterval: null,
+    voteTimeRemaining: null,
+    rounds: [],
+    results: [],
+    currentRound: 0,
+    currentMatch: 0,
+    votesA: 0,
+    votesB: 0,
+    localTapsA: 0,
+    localTapsB: 0,
+    remoteVotesSnapshot: { a: 0, b: 0 },
+    votingActive: false,
+    decided: false,
+    history: [],
+    nowPlaying: null, // 'a' | 'b' | null
+    networked: false,
+    roomCode: null,
+    matchKey: null
+  };
+  let lastRoomData = null;
+  let lastAddedSongId = null;
+  let voterVotedMatchKey = null;
+  const firebaseReady = window.__fb && window.__fb.ready;
+  const db = window.__fb ? window.__fb.db : null;
+
+  // ---------- Storage (localStorage — works once hosted, e.g. via GitHub Pages) ----------
+  function migrateLibraryEntry(item){
+    if(!item.categories){
+      item.categories = item.category ? [item.category] : [];
+      delete item.category;
+    }
+    if(item.spotifyId === undefined) item.spotifyId = null;
+    if(item.spotifyThumb === undefined) item.spotifyThumb = null;
+    return item;
+  }
+  async function loadState(){
+    try{
+      const raw = localStorage.getItem(KEY_LIBRARY);
+      state.library = raw ? JSON.parse(raw) : SEED_LIBRARY.slice();
+    }catch(e){
+      state.library = SEED_LIBRARY.slice();
+    }
+    state.library = state.library.map(migrateLibraryEntry);
+
+    // If Firebase is set up, the cloud copy is the shared source of truth —
+    // this is what makes the library the same on every device, not just this one.
+    if(firebaseReady){
+      try{
+        const snap = await db.ref('library/songs').once('value');
+        const cloudLibrary = snap.val();
+        if(cloudLibrary && cloudLibrary.length > 0){
+          state.library = cloudLibrary.map(migrateLibraryEntry);
+        } else if(state.library.length > 0){
+          // Nothing in the cloud yet — seed it with whatever's already on this device.
+          await db.ref('library/songs').set(state.library);
+        }
+        db.ref('library/songs').on('value', (snap2)=>{
+          const val = snap2.val();
+          if(val){
+            state.library = val.map(migrateLibraryEntry);
+            renderLibraryList();
+            refreshFilterAndSizes();
+          }
+        });
+      }catch(e){ /* stay with the local copy if the cloud read fails */ }
+    }
+
+    saveLibrary();
+
+    try{
+      const raw = localStorage.getItem(KEY_HOF);
+      if(raw) state.hallOfFame = JSON.parse(raw);
+    }catch(e){}
+
+    try{
+      const raw = localStorage.getItem(KEY_TEMPLATES);
+      state.templates = raw ? JSON.parse(raw) : {};
+    }catch(e){
+      state.templates = {};
+    }
+    // Built-in templates always reflect the latest version shipped in the app,
+    // custom templates the user saved themselves are left untouched.
+    Object.keys(SEED_TEMPLATES).forEach(name=>{ state.templates[name] = SEED_TEMPLATES[name]; });
+    saveTemplates();
+
+    renderLibraryList();
+    refreshFilterAndSizes();
+
+    goToTournamentHome();
+  }
+  function saveLibrary(){
+    try{ localStorage.setItem(KEY_LIBRARY, JSON.stringify(state.library)); }catch(e){}
+    if(firebaseReady){
+      try{ db.ref('library/songs').set(state.library); }catch(e){}
+    }
+  }
+  function saveHof(){ try{ localStorage.setItem(KEY_HOF, JSON.stringify(state.hallOfFame)); }catch(e){} }
+  function saveTemplates(){ try{ localStorage.setItem(KEY_TEMPLATES, JSON.stringify(state.templates)); }catch(e){} }
+
+  // ---------- Utils ----------
+  function extractYouTubeId(input){
+    if(!input) return null;
+    input = input.trim();
+    if(/^[a-zA-Z0-9_-]{11}$/.test(input)) return input;
+    const patterns = [
+      /youtu\.be\/([a-zA-Z0-9_-]{11})/,
+      /youtube\.com\/watch\?v=([a-zA-Z0-9_-]{11})/,
+      /youtube\.com\/embed\/([a-zA-Z0-9_-]{11})/,
+      /youtube\.com\/shorts\/([a-zA-Z0-9_-]{11})/
+    ];
+    for(const p of patterns){ const m = input.match(p); if(m) return m[1]; }
+    return null;
+  }
+  function extractSpotifyTrackId(input){
+    if(!input) return null;
+    input = input.trim();
+    const patterns = [
+      /open\.spotify\.com\/(?:intl-[a-zA-Z-]+\/)?track\/([a-zA-Z0-9]+)/,
+      /spotify:track:([a-zA-Z0-9]+)/
+    ];
+    for(const p of patterns){ const m = input.match(p); if(m) return m[1]; }
+    return null;
+  }
+  async function fetchSpotifyMeta(link){
+    try{
+      const res = await fetch('https://open.spotify.com/oembed?url=' + encodeURIComponent(link));
+      if(!res.ok) return null;
+      const data = await res.json();
+      return { title: data.title || null, thumbnail: data.thumbnail_url || null };
+    }catch(e){ return null; }
+  }
+  async function fetchYouTubeMeta(link){
+    try{
+      const res = await fetch('https://www.youtube.com/oembed?url=' + encodeURIComponent(link) + '&format=json');
+      if(!res.ok) return null;
+      const data = await res.json();
+      return { title: data.title || null, author: data.author_name || null };
+    }catch(e){ return null; }
+  }
+  function splitArtistTitle(fullTitle){
+    // YouTube video titles are often "Artist - Song" — best-effort split, always editable afterwards.
+    if(!fullTitle) return { artist: null, title: null };
+    const parts = fullTitle.split(/\s+-\s+/);
+    if(parts.length >= 2) return { artist: parts[0].trim(), title: parts.slice(1).join(' - ').trim() };
+    return { artist: null, title: fullTitle.trim() };
+  }
+  function shuffle(arr){
+    const a = arr.slice();
+    for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; }
+    return a;
+  }
+  function uid(){ return 'song-' + Math.random().toString(36).slice(2,10); }
+  function escapeHtml(str){ const d=document.createElement('div'); d.textContent = str; return d.innerHTML; }
+  function songLabel(song){ return song.title ? `${song.artist} – ${song.title}` : song.artist; }
+  function hofKey(song){ return (song.artist.trim() + '|' + (song.title||'').trim()).toLowerCase(); }
+  const GAMEPLAY_SCREENS = ['game', 'voter-game', 'end'];
+  function showScreen(id){
+    document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+    document.getElementById('screen-'+id).classList.add('active');
+  }
+
+  function goToTournamentHome(){
+    if(firebaseReady) showScreen('landing');
+    else showScreen('rules');
+  }
+
+  // ---------- Landing / Mode select / navigation ----------
+  document.getElementById('landing-create-btn').addEventListener('click', ()=>{
+    showScreen('mode-select');
+  });
+  document.getElementById('landing-join-btn').addEventListener('click', ()=>{
+    showScreen('join');
+  });
+  document.getElementById('mode-host-btn').addEventListener('click', ()=>{
+    state.networked = true;
+    document.getElementById('rules-back-link').style.display = 'inline-flex';
+    if(firebaseReady && !state.roomCode){ createFirebaseRoom(); }
+    renderTemplateChoiceCards();
+    showScreen('template-choice');
+  });
+  document.getElementById('mode-offline-btn').addEventListener('click', ()=>{
+    state.networked = false;
+    document.getElementById('rules-back-link').style.display = 'inline-flex';
+    renderTemplateChoiceCards();
+    showScreen('template-choice');
+  });
+
+  function renderTemplateChoiceCards(){
+    const wrap = document.getElementById('template-choice-cards');
+    wrap.innerHTML = '';
+    Object.keys(state.templates).forEach(name=>{
+      const card = document.createElement('button');
+      card.className = 'mode-card';
+      card.innerHTML = `
+        <span class="mode-icon">📋</span>
+        <span class="mode-text"><span class="mode-title">${escapeHtml(name)}</span><span class="mode-desc">${state.templates[name].length} Songs — sofort startklar</span></span>
+        <span class="mode-arrow">→</span>
+      `;
+      card.addEventListener('click', ()=>{
+        loadTemplateReplacing(name);
+        showScreen('rules');
+      });
+      wrap.appendChild(card);
+    });
+    const noBtn = document.createElement('button');
+    noBtn.className = 'mode-card';
+    noBtn.innerHTML = `
+      <span class="mode-icon">✖️</span>
+      <span class="mode-text"><span class="mode-title">Nein, selbst zusammenstellen</span><span class="mode-desc">Eigene Songs hinzufügen und Playlists verwalten</span></span>
+      <span class="mode-arrow">→</span>
+    `;
+    noBtn.addEventListener('click', ()=>{ showScreen('rules'); });
+    wrap.appendChild(noBtn);
+  }
+
+  function loadTemplateReplacing(name){
+    const songs = state.templates[name] || [];
+    state.library = songs.map(tpl => Object.assign({}, tpl, { id: uid(), categories: (tpl.categories||[]).slice() }));
+    saveLibrary();
+    renderLibraryList();
+    refreshFilterAndSizes();
+  }
+
+  document.getElementById('rules-next-btn').addEventListener('click', ()=>{
+    showScreen('library');
+  });
+  document.querySelectorAll('[data-back]').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      if(db && state.roomCode){
+        db.ref('rooms/'+state.roomCode).off();
+        db.ref('rooms/'+state.roomCode+'/remoteVotes').off();
+        db.ref('rooms/'+state.roomCode+'/participants').off();
+      }
+      if(btn.dataset.back === 'landing'){
+        state.roomCode = null;
+        document.getElementById('room-banner').style.display = 'none';
+        document.getElementById('rules-room-banner').style.display = 'none';
+        document.getElementById('rules-participants-box').style.display = 'none';
+        document.getElementById('library-room-banner').style.display = 'none';
+        document.getElementById('library-participants-box').style.display = 'none';
+        document.getElementById('game-participants-box').style.display = 'none';
+      }
+      showScreen(btn.dataset.back);
+    });
+  });
+
+  // ---------- Multiplayer: host side ----------
+  function generateRoomCode(){ return String(Math.floor(1000 + Math.random()*9000)); }
+
+  function createFirebaseRoom(){
+    state.roomCode = generateRoomCode();
+    db.ref('rooms/'+state.roomCode).set({ createdAt: Date.now(), status: 'setup' });
+
+    ['room-banner','rules-room-banner','library-room-banner'].forEach(id=>{ document.getElementById(id).style.display = 'flex'; });
+    document.getElementById('room-code-value').textContent = state.roomCode;
+    document.getElementById('rules-room-code-value').textContent = state.roomCode;
+    document.getElementById('library-room-code-value').textContent = state.roomCode;
+
+    db.ref('rooms/'+state.roomCode+'/remoteVotes').on('value', (snap)=>{
+      const val = snap.val() || {};
+      let a=0, b=0;
+      Object.values(val).forEach(v=>{ if(v==='a') a++; else if(v==='b') b++; });
+      state.remoteVotesSnapshot = { a, b };
+      updateVoteDisplay();
+    });
+
+    db.ref('rooms/'+state.roomCode+'/participants').on('value', (snap)=>{
+      renderParticipants(snap.val() || {});
+    });
+  }
+
+  function renderParticipants(participants){
+    const names = Object.values(participants).map(p=>p.name).filter(Boolean);
+    const html = names.length === 0
+      ? `👥 Noch niemand beigetreten — Code weitergeben!`
+      : `👥 <b>${names.length}</b> verbunden: ` + names.map(n=>`<span class="participant-pill">${escapeHtml(n)}</span>`).join(' ');
+    ['rules-participants-box','library-participants-box','game-participants-box'].forEach(id=>{
+      const el = document.getElementById(id);
+      el.style.display = 'flex';
+      el.innerHTML = html;
+    });
+  }
+
+  function pushMatchToFirebase(){
+    if(!(firebaseReady && state.networked && state.roomCode)) return;
+    const match = currentMatchup();
+    state.matchKey = state.currentRound + '-' + state.currentMatch;
+    db.ref('rooms/'+state.roomCode).update({
+      matchKey: state.matchKey,
+      roundName: roundName(state.currentRound),
+      matchProgress: `Duell ${state.currentMatch+1} von ${state.rounds[state.currentRound].length}`,
+      songA: match.songA,
+      songB: match.songB,
+      votingActive: false,
+      status: 'playing'
+    });
+    db.ref('rooms/'+state.roomCode+'/remoteVotes').set(null);
+  }
+
+  function updateVoteDisplay(){
+    const totalA = state.localTapsA + state.remoteVotesSnapshot.a;
+    const totalB = state.localTapsB + state.remoteVotesSnapshot.b;
+    state.votesA = totalA; state.votesB = totalB;
+    document.getElementById('vote-count-a').textContent = totalA;
+    document.getElementById('vote-count-b').textContent = totalB;
+  }
+
+  // ---------- Multiplayer: voter side ----------
+  function getVoterId(){
+    let id = localStorage.getItem('song-battle-voter-id');
+    if(!id){ id = 'voter-' + Math.random().toString(36).slice(2,10); localStorage.setItem('song-battle-voter-id', id); }
+    return id;
+  }
+
+  document.getElementById('join-room-btn').addEventListener('click', ()=>{
+    const code = document.getElementById('join-code-input').value.trim();
+    const name = document.getElementById('join-name-input').value.trim();
+    const errorEl = document.getElementById('join-form-error');
+    errorEl.textContent = '';
+    if(!/^[0-9]{4}$/.test(code)){ errorEl.textContent = 'Bitte einen 4-stelligen Code eingeben.'; return; }
+    if(!name){ errorEl.textContent = 'Bitte einen Namen eingeben.'; return; }
+    if(!db){ errorEl.textContent = 'Keine Verbindung verfügbar.'; return; }
+    db.ref('rooms/'+code).once('value').then(snap=>{
+      if(!snap.exists()){ errorEl.textContent = 'Raum nicht gefunden — Code prüfen.'; return; }
+      state.roomCode = code;
+      voterVotedMatchKey = null;
+      const myRef = db.ref('rooms/'+code+'/participants/'+getVoterId());
+      myRef.set({ name, joinedAt: Date.now() });
+      myRef.onDisconnect().remove();
+      showScreen('voter-game');
+      db.ref('rooms/'+code).on('value', (snap2)=>{
+        const data = snap2.val();
+        if(data) renderVoterView(data);
+      });
+    }).catch(()=>{ errorEl.textContent = 'Verbindung fehlgeschlagen. Nochmal versuchen.'; });
+  });
+
+  function renderVoterView(data){
+    lastRoomData = data;
+    if(data.status === 'ended'){
+      document.getElementById('voter-ended-msg').style.display = 'block';
+      document.getElementById('voter-ended-msg').innerHTML =
+        `<div class="wb-label">🏆 Turnier beendet</div><div class="wb-name">${escapeHtml(data.championArtist||'')}${data.championTitle ? ' – '+escapeHtml(data.championTitle) : ''}</div>`;
+      document.getElementById('voter-vote-row').style.display = 'none';
+      document.getElementById('voter-waiting').style.display = 'none';
+      document.getElementById('voter-voted-msg').style.display = 'none';
+      return;
+    }
+    document.getElementById('voter-ended-msg').style.display = 'none';
+
+    if(data.status === 'setup' || !data.songA){
+      document.getElementById('voter-round-name').textContent = '⏳ Lobby';
+      document.getElementById('voter-match-progress').textContent = 'Der Host bereitet das Turnier gerade vor …';
+      document.getElementById('voter-artist-a').textContent = '–';
+      document.getElementById('voter-title-a').textContent = '';
+      document.getElementById('voter-artist-b').textContent = '–';
+      document.getElementById('voter-title-b').textContent = '';
+      document.getElementById('voter-vote-row').style.display = 'none';
+      document.getElementById('voter-waiting').style.display = 'block';
+      document.getElementById('voter-voted-msg').style.display = 'none';
+      return;
+    }
+
+    document.getElementById('voter-round-name').textContent = data.roundName || '–';
+    document.getElementById('voter-match-progress').textContent = data.matchProgress || '';
+    if(data.songA){
+      document.getElementById('voter-artist-a').textContent = data.songA.artist;
+      document.getElementById('voter-title-a').textContent = data.songA.title || '';
+    }
+    if(data.songB){
+      document.getElementById('voter-artist-b').textContent = data.songB.artist;
+      document.getElementById('voter-title-b').textContent = data.songB.title || '';
+    }
+
+    const hasVoted = (voterVotedMatchKey === data.matchKey);
+    document.getElementById('voter-vote-row').style.display = (data.votingActive && !hasVoted) ? 'grid' : 'none';
+    document.getElementById('voter-waiting').style.display = (!data.votingActive && !hasVoted) ? 'block' : 'none';
+    document.getElementById('voter-voted-msg').style.display = hasVoted ? 'block' : 'none';
+  }
+
+  function castVote(side){
+    if(!db || !state.roomCode) return;
+    db.ref('rooms/'+state.roomCode+'/remoteVotes/'+getVoterId()).set(side);
+    if(lastRoomData){ voterVotedMatchKey = lastRoomData.matchKey; renderVoterView(lastRoomData); }
+  }
+  document.getElementById('voter-vote-a-btn').addEventListener('click', ()=>castVote('a'));
+  document.getElementById('voter-vote-b-btn').addEventListener('click', ()=>castVote('b'));
+
+  // ---------- Library management ----------
+  function libThumbSrc(item){
+    if(item.videoId) return `https://img.youtube.com/vi/${item.videoId}/mqdefault.jpg`;
+    if(item.spotifyThumb) return item.spotifyThumb;
+    return null;
+  }
+
+  function renderLibraryList(){
+    const list = document.getElementById('lib-list');
+    const emptyHint = document.getElementById('lib-empty-hint');
+    list.innerHTML = '';
+    if(state.library.length === 0){
+      emptyHint.style.display = 'block';
+      emptyHint.textContent = 'Noch keine Songs in der Bibliothek.';
+    } else {
+      emptyHint.style.display = 'none';
+      state.library.forEach(item=>{
+        const row = document.createElement('div');
+        row.className = 'lib-row' + (item.id === lastAddedSongId ? ' just-added' : '');
+        const thumb = libThumbSrc(item);
+        const platformBadge = item.spotifyId
+          ? `<span class="platform-badge sp">🟢 Spotify</span>`
+          : `<span class="platform-badge yt">▶️ YouTube</span>`;
+        const pillsHtml = (item.categories||[]).map(c => `
+          <span class="playlist-pill">${escapeHtml(c)}<button data-remove-pl="${item.id}|${escapeHtml(c)}" title="Aus Playlist entfernen">×</button></span>
+        `).join('');
+        row.innerHTML = `
+          ${thumb ? `<img src="${thumb}" alt="">` : `<div style="width:64px;height:64px;border-radius:10px;background:var(--surface);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:22px;">🎵</div>`}
+          <div class="meta">
+            <div class="artist" contenteditable="true" spellcheck="false" data-edit-field="artist" data-edit-id="${item.id}">${escapeHtml(item.artist)}</div>
+            <div class="title" contenteditable="true" spellcheck="false" data-edit-field="title" data-edit-id="${item.id}" data-placeholder="Titel antippen …">${escapeHtml(item.title || '')}</div>
+            <div>${platformBadge}</div>
+            <div class="playlist-pills">${pillsHtml}</div>
+            <div class="lib-controls">
+              <div class="add-playlist-row">
+                <input type="text" placeholder="+ Playlist" data-add-pl-input="${item.id}" list="playlist-suggestions">
+                <button class="btn small" data-add-pl-btn="${item.id}">+</button>
+              </div>
+            </div>
+          </div>
+          <button class="del" data-id="${item.id}" title="Entfernen">✕</button>
+        `;
+        list.appendChild(row);
+      });
+      list.querySelectorAll('[data-edit-field]').forEach(el=>{
+        el.addEventListener('blur', ()=>{
+          const song = state.library.find(s=>s.id===el.dataset.editId);
+          if(!song) return;
+          const newVal = el.textContent.replace(/\s+/g,' ').trim();
+          if(el.dataset.editField === 'artist'){
+            song.artist = newVal || 'Interpret antippen zum Bearbeiten';
+            el.textContent = song.artist;
+          } else {
+            song.title = newVal;
+          }
+          saveLibrary();
+        });
+        el.addEventListener('keydown', (e)=>{ if(e.key==='Enter'){ e.preventDefault(); el.blur(); } });
+      });
+      list.querySelectorAll('.del').forEach(btn=>{
+        btn.addEventListener('click', ()=>{
+          state.library = state.library.filter(s=>s.id !== btn.dataset.id);
+          renderLibraryList(); saveLibrary(); refreshFilterAndSizes();
+        });
+      });
+      list.querySelectorAll('[data-remove-pl]').forEach(btn=>{
+        btn.addEventListener('click', ()=>{
+          const [songId, plName] = btn.dataset.removePl.split('|');
+          const song = state.library.find(s=>s.id===songId);
+          if(song) song.categories = (song.categories||[]).filter(c=>c!==plName);
+          renderLibraryList(); saveLibrary(); refreshFilterAndSizes();
+        });
+      });
+      list.querySelectorAll('[data-add-pl-btn]').forEach(btn=>{
+        btn.addEventListener('click', ()=>{
+          const songId = btn.dataset.addPlBtn;
+          const input = list.querySelector(`[data-add-pl-input="${songId}"]`);
+          const val = normalizeCategory(input.value);
+          if(!val) return;
+          const song = state.library.find(s=>s.id===songId);
+          if(song){
+            song.categories = song.categories || [];
+            if(!song.categories.some(c=>c.toLowerCase()===val.toLowerCase())) song.categories.push(val);
+          }
+          renderLibraryList(); saveLibrary(); refreshFilterAndSizes();
+        });
+      });
+      list.querySelectorAll('[data-add-pl-input]').forEach(inp=>{
+        inp.addEventListener('keydown', (e)=>{
+          if(e.key==='Enter'){ e.preventDefault(); list.querySelector(`[data-add-pl-btn="${inp.dataset.addPlInput}"]`).click(); }
+        });
+      });
+    }
+    lastAddedSongId = null;
+  }
+
+  function normalizeCategory(input){
+    const trimmed = input.trim();
+    if(!trimmed) return '';
+    const existing = getCategories().find(c => c.toLowerCase() === trimmed.toLowerCase());
+    return existing || trimmed;
+  }
+  function getCategories(){
+    const set = [];
+    state.library.forEach(item=>{
+      (item.categories||[]).forEach(c=>{
+        if(!set.some(x=>x.toLowerCase()===c.toLowerCase())) set.push(c);
+      });
+    });
+    return set;
+  }
+  function refreshPlaylistSuggestions(){
+    const datalist = document.getElementById('playlist-suggestions');
+    datalist.innerHTML = getCategories().map(c=>`<option value="${escapeHtml(c)}">`).join('');
+  }
+
+  document.getElementById('lib-add-btn').addEventListener('click', async ()=>{
+    const ytInput = document.getElementById('new-youtube-link');
+    const spInput = document.getElementById('new-spotify-link');
+    const errorEl = document.getElementById('lib-form-error');
+    const statusEl = document.getElementById('link-fetch-status');
+    const addBtn = document.getElementById('lib-add-btn');
+    errorEl.textContent = '';
+
+    const ytLink = ytInput.value.trim();
+    const spLink = spInput.value.trim();
+
+    if(!ytLink && !spLink){ errorEl.textContent = 'Bitte einen YouTube- oder Spotify-Link einfügen.'; return; }
+    if(ytLink && spLink){ errorEl.textContent = 'Bitte nur eins der beiden Felder ausfüllen, nicht beide.'; return; }
+
+    let videoId = null, spotifyId = null;
+    if(ytLink){
+      videoId = extractYouTubeId(ytLink);
+      if(!videoId){ errorEl.textContent = 'Das sieht nicht nach einem gültigen YouTube-Link aus.'; return; }
+    } else {
+      spotifyId = extractSpotifyTrackId(spLink);
+      if(!spotifyId){ errorEl.textContent = 'Das sieht nicht nach einem gültigen Spotify-Link aus.'; return; }
+    }
+
+    addBtn.disabled = true; addBtn.textContent = '⏳ Lade Song-Infos …';
+    statusEl.style.display = 'flex';
+
+    let artist = '', title = '', spotifyThumb = null;
+
+    if(videoId){
+      const meta = await fetchYouTubeMeta(ytLink);
+      if(meta){
+        const parsed = splitArtistTitle(meta.title);
+        artist = parsed.artist || meta.author || '';
+        title = parsed.title || meta.title || '';
+      }
+    } else if(spotifyId){
+      // Spotify's public oEmbed only exposes a title + thumbnail, no separate artist field —
+      // title still auto-fills, artist can be fixed by clicking it in the list below if needed.
+      const meta = await fetchSpotifyMeta(spLink);
+      if(meta){
+        if(meta.thumbnail) spotifyThumb = meta.thumbnail;
+        title = meta.title || '';
+      }
+    }
+    if(!artist) artist = 'Interpret antippen zum Bearbeiten';
+
+    const newSongId = uid();
+    lastAddedSongId = newSongId;
+    state.library.push({ id: newSongId, artist, title, videoId: videoId||null, spotifyId: spotifyId||null, spotifyThumb, categories: [] });
+    ytInput.value = ''; spInput.value = '';
+    renderLibraryList(); saveLibrary(); refreshFilterAndSizes();
+
+    addBtn.disabled = false; addBtn.textContent = '➕ Song hinzufügen';
+    statusEl.style.display = 'none';
+    ytInput.focus();
+  });
+  [document.getElementById('new-youtube-link'), document.getElementById('new-spotify-link')].forEach(inp=>{
+    inp.addEventListener('keydown', (e)=>{ if(e.key==='Enter') document.getElementById('lib-add-btn').click(); });
+  });
+
+  // ---------- Templates ----------
+  function songMatches(a, b){
+    if(a.videoId && b.videoId) return a.videoId === b.videoId;
+    if(a.spotifyId && b.spotifyId) return a.spotifyId === b.spotifyId;
+    return false;
+  }
+
+  function renderTemplateChips(){
+    const wrap = document.getElementById('template-chips');
+    const names = Object.keys(state.templates);
+    wrap.innerHTML = '';
+    if(names.length === 0){
+      wrap.innerHTML = `<span style="color:var(--muted); font-size:13px;">Noch keine Vorlagen gespeichert.</span>`;
+      return;
+    }
+    names.forEach(name=>{
+      const chip = document.createElement('button');
+      chip.type = 'button';
+      chip.className = 'chip';
+      chip.textContent = `▶️ ${name} (${state.templates[name].length})`;
+      chip.addEventListener('click', ()=>loadTemplate(name));
+      wrap.appendChild(chip);
+    });
+  }
+
+  function loadTemplate(name){
+    const msg = document.getElementById('template-msg');
+    const songs = state.templates[name] || [];
+    let added = 0;
+    songs.forEach(tpl=>{
+      const exists = state.library.some(s=>songMatches(s, tpl));
+      if(!exists){
+        state.library.push(Object.assign({}, tpl, { id: uid(), categories: (tpl.categories||[]).slice() }));
+        added++;
+      }
+    });
+    saveLibrary();
+    renderLibraryList();
+    refreshFilterAndSizes();
+    msg.style.color = 'var(--cyan)';
+    msg.textContent = added > 0 ? `✅ ${added} Song(s) aus „${name}" hinzugefügt.` : `Alle Songs aus „${name}" waren schon in der Bibliothek.`;
+  }
+
+  document.getElementById('save-template-btn').addEventListener('click', ()=>{
+    const msg = document.getElementById('template-msg');
+    msg.style.color = 'var(--pink)';
+    if(state.library.length === 0){ msg.textContent = 'Bibliothek ist leer — erst Songs hinzufügen.'; return; }
+    const name = prompt('Name für die Vorlage (z.B. "Rock Night"):');
+    if(!name || !name.trim()) return;
+    const trimmed = name.trim();
+    state.templates[trimmed] = state.library.map(s => ({
+      artist: s.artist, title: s.title, videoId: s.videoId, spotifyId: s.spotifyId,
+      spotifyThumb: s.spotifyThumb, categories: (s.categories||[]).slice()
+    }));
+    saveTemplates();
+    renderTemplateChips();
+    msg.style.color = 'var(--cyan)';
+    msg.textContent = `✅ Vorlage „${trimmed}" gespeichert (${state.library.length} Songs).`;
+  });
+
+  // ---------- Bulk add (multiple links at once) ----------
+  document.getElementById('bulk-toggle-btn').addEventListener('click', ()=>{
+    const panel = document.getElementById('bulk-add-panel');
+    const btn = document.getElementById('bulk-toggle-btn');
+    const isOpen = panel.style.display === 'block';
+    panel.style.display = isOpen ? 'none' : 'block';
+    btn.textContent = isOpen ? '📋 Mehrere Links auf einmal einfügen ▾' : '📋 Mehrere Links auf einmal einfügen ▴';
+  });
+
+  document.getElementById('bulk-add-btn').addEventListener('click', async ()=>{
+    const textarea = document.getElementById('bulk-links-input');
+    const statusEl = document.getElementById('bulk-status');
+    const msgEl = document.getElementById('bulk-msg');
+    const btn = document.getElementById('bulk-add-btn');
+    msgEl.textContent = '';
+
+    const lines = textarea.value.split('\n').map(l=>l.trim()).filter(Boolean);
+    if(lines.length === 0){ msgEl.textContent = 'Bitte mindestens einen Link einfügen.'; return; }
+
+    btn.disabled = true;
+    statusEl.style.display = 'flex';
+    let successCount = 0, failCount = 0;
+
+    for(let i=0; i<lines.length; i++){
+      statusEl.innerHTML = `<span class="spinner"></span> Verarbeite Link ${i+1} von ${lines.length} …`;
+      const link = lines[i];
+      const videoId = extractYouTubeId(link);
+      const spotifyId = videoId ? null : extractSpotifyTrackId(link);
+      if(!videoId && !spotifyId){ failCount++; continue; }
+
+      let artist = '', title = '', spotifyThumb = null;
+      if(videoId){
+        const meta = await fetchYouTubeMeta(link);
+        if(meta){
+          const parsed = splitArtistTitle(meta.title);
+          artist = parsed.artist || meta.author || '';
+          title = parsed.title || meta.title || '';
+        }
+      } else if(spotifyId){
+        const meta = await fetchSpotifyMeta(link);
+        if(meta){
+          if(meta.thumbnail) spotifyThumb = meta.thumbnail;
+          title = meta.title || '';
+        }
+      }
+      if(!artist) artist = 'Interpret antippen zum Bearbeiten';
+
+      state.library.push({ id: uid(), artist, title, videoId: videoId||null, spotifyId: spotifyId||null, spotifyThumb, categories: [] });
+      successCount++;
+    }
+
+    saveLibrary();
+    renderLibraryList();
+    refreshFilterAndSizes();
+
+    statusEl.style.display = 'none';
+    msgEl.style.color = 'var(--cyan)';
+    msgEl.textContent = `✅ ${successCount} Song(s) hinzugefügt` + (failCount > 0 ? `, ${failCount} Link(s) nicht erkannt.` : '.');
+    textarea.value = '';
+    btn.disabled = false;
+  });
+
+  // ---------- Category + bracket-size chips ----------
+  function computeFilteredPool(){
+    if(state.filterCategories.size === 0) return state.library;
+    return state.library.filter(item => (item.categories||[]).some(c=>state.filterCategories.has(c)));
+  }
+
+  function refreshFilterAndSizes(){
+    refreshPlaylistSuggestions();
+    renderCategoryChips();
+    renderSizeChips();
+    renderTimeChips();
+    renderTemplateChips();
+    updateStartHint();
+  }
+
+  function renderCategoryChips(){
+    const wrap = document.getElementById('category-chips');
+    const cats = getCategories();
+    wrap.innerHTML = '';
+    const allChip = document.createElement('button');
+    allChip.type = 'button';
+    allChip.className = 'chip' + (state.filterCategories.size===0 ? ' active' : '');
+    allChip.textContent = 'Alle';
+    allChip.addEventListener('click', ()=>{
+      state.filterCategories.clear();
+      renderCategoryChips(); updateStartHint();
+    });
+    wrap.appendChild(allChip);
+
+    cats.forEach(cat=>{
+      const chip = document.createElement('button');
+      chip.type = 'button';
+      chip.className = 'chip' + (state.filterCategories.has(cat) ? ' active' : '');
+      chip.textContent = cat;
+      chip.addEventListener('click', ()=>{
+        if(state.filterCategories.has(cat)) state.filterCategories.delete(cat);
+        else state.filterCategories.add(cat);
+        renderCategoryChips(); updateStartHint();
+      });
+      wrap.appendChild(chip);
+    });
+  }
+
+  const ROUND_OPTIONS = [
+    { rounds: 2, songs: 4 },
+    { rounds: 3, songs: 8 },
+    { rounds: 4, songs: 16 },
+    { rounds: 5, songs: 32 },
+    { rounds: 6, songs: 64 }
+  ];
+
+  function renderSizeChips(){
+    const wrap = document.getElementById('size-chips');
+    if(state.bracketSize === null) state.bracketSize = 8; // sensible default: 3 Runden
+
+    wrap.innerHTML = '';
+    ROUND_OPTIONS.forEach(opt=>{
+      const chip = document.createElement('button');
+      chip.type = 'button';
+      chip.className = 'chip' + (state.bracketSize === opt.songs ? ' active' : '');
+      chip.textContent = `${opt.songs}`;
+      chip.addEventListener('click', ()=>{
+        state.bracketSize = opt.songs;
+        renderSizeChips();
+        updateStartHint();
+      });
+      wrap.appendChild(chip);
+    });
+  }
+
+  const TIME_OPTIONS = [
+    { label: 'Kein Limit', seconds: null },
+    { label: '5 Sek', seconds: 5 },
+    { label: '15 Sek', seconds: 15 },
+    { label: '30 Sek', seconds: 30 },
+    { label: '60 Sek', seconds: 60 }
+  ];
+
+  function renderTimeChips(){
+    const wrap = document.getElementById('time-chips');
+    wrap.innerHTML = '';
+    TIME_OPTIONS.forEach(opt=>{
+      const chip = document.createElement('button');
+      chip.type = 'button';
+      chip.className = 'chip' + (state.voteTimeLimit === opt.seconds ? ' active' : '');
+      chip.textContent = opt.label;
+      chip.addEventListener('click', ()=>{
+        state.voteTimeLimit = opt.seconds;
+        renderTimeChips();
+      });
+      wrap.appendChild(chip);
+    });
+  }
+
+  function updateStartHint(){
+    const pool = computeFilteredPool();
+    const hint = document.getElementById('start-hint');
+    const startBtn = document.getElementById('start-tournament-btn');
+    const needed = state.bracketSize || 4;
+
+    if(pool.length < needed){
+      hint.textContent = `Noch ${needed - pool.length} Song(s) hinzufügen, um dieses Turnier zu starten.`;
+      startBtn.disabled = true;
+    } else {
+      hint.textContent = `${pool.length} von ${needed} benötigten Songs — Turnier bereit. 🎉`;
+      startBtn.disabled = false;
+    }
+  }
+
+  // ---------- Tournament flow ----------
+  function beginTournament(){
+    const pool = computeFilteredPool();
+    const chosen = shuffle(pool).slice(0, state.bracketSize);
+    const round0 = [];
+    for(let i=0;i<chosen.length;i+=2) round0.push({ songA: chosen[i], songB: chosen[i+1] });
+
+    state.rounds = [round0];
+    state.results = [[]];
+    state.currentRound = 0;
+    state.currentMatch = 0;
+    state.history = [];
+
+    if(firebaseReady && state.networked && state.roomCode){
+      db.ref('rooms/'+state.roomCode).update({ status: 'playing', championArtist: null, championTitle: null });
+    }
+
+    showScreen('game');
+    showMatch();
+  }
+  document.getElementById('start-tournament-btn').addEventListener('click', beginTournament);
+
+  function totalRoundsFromSize(){ return Math.log2(state.bracketSize); }
+
+  function roundName(roundIndex){
+    const total = totalRoundsFromSize();
+    const distanceFromFinal = total - 1 - roundIndex;
+    return ROUND_NAMES_FROM_FINAL[distanceFromFinal] || `Runde ${roundIndex+1}`;
+  }
+
+  function retriggerAnim(el){
+    el.classList.remove('match-transition');
+    void el.offsetWidth; // force reflow so the animation restarts
+    el.classList.add('match-transition');
+  }
+
+  function currentMatchup(){ return state.rounds[state.currentRound][state.currentMatch]; }
+
+  function showMatch(){
+    clearVoteTimer();
+    state.votesA = 0; state.votesB = 0; state.localTapsA = 0; state.localTapsB = 0;
+    state.remoteVotesSnapshot = { a: 0, b: 0 };
+    state.votingActive = false; state.decided = false; state.nowPlaying = null;
+    const match = currentMatchup();
+
+    document.getElementById('round-name').textContent = roundName(state.currentRound);
+    document.getElementById('match-progress').textContent =
+      `Duell ${state.currentMatch+1} von ${state.rounds[state.currentRound].length}`;
+
+    fillCard('a', match.songA);
+    fillCard('b', match.songB);
+
+    document.getElementById('yt-player').style.display = 'none';
+    document.getElementById('yt-player').src = '';
+    document.getElementById('spotify-player').style.display = 'none';
+    document.getElementById('spotify-player').src = '';
+    document.getElementById('video-stage').classList.remove('spotify-mode');
+    document.getElementById('spotify-hint').style.display = 'none';
+    document.getElementById('video-placeholder').style.display = 'flex';
+    document.getElementById('video-placeholder').textContent = '🎧 Tippt auf „Anhören", um einen Song zu spielen';
+    document.getElementById('card-a').classList.remove('playing');
+    document.getElementById('card-b').classList.remove('playing');
+
+    document.getElementById('vote-label-a').textContent = songLabel(match.songA);
+    document.getElementById('vote-label-b').textContent = songLabel(match.songB);
+    updateVoteDisplay();
+    document.getElementById('vote-section').style.display = 'none';
+    document.getElementById('start-vote-row').style.display = 'flex';
+    document.getElementById('tiebreak-box').style.display = 'none';
+    document.getElementById('winner-banner').style.display = 'none';
+    document.getElementById('next-row').style.display = 'none';
+
+    retriggerAnim(document.getElementById('round-header-anim'));
+    retriggerAnim(document.getElementById('duel-arena-el'));
+    retriggerAnim(document.getElementById('video-stage'));
+
+    pushMatchToFirebase();
+    renderBracketTree('bracket-tree');
+  }
+
+  function fillCard(side, song){
+    document.getElementById(`card-${side}-artist`).textContent = song.artist;
+    document.getElementById(`card-${side}-title`).textContent = song.title || '';
+    const catEl = document.getElementById(`card-${side}-cat`);
+    if(song.categories && song.categories.length){ catEl.style.display = 'inline-block'; catEl.textContent = song.categories.join(' · '); }
+    else { catEl.style.display = 'none'; }
+  }
+
+  function playSong(side){
+    const match = currentMatchup();
+    const song = side === 'a' ? match.songA : match.songB;
+    document.getElementById('video-placeholder').style.display = 'none';
+    const ytFrame = document.getElementById('yt-player');
+    const spFrame = document.getElementById('spotify-player');
+    const stage = document.getElementById('video-stage');
+
+    if(song.spotifyId){
+      ytFrame.style.display = 'none'; ytFrame.src = '';
+      spFrame.style.display = 'block';
+      spFrame.src = `https://open.spotify.com/embed/track/${song.spotifyId}?utm_source=oembed`;
+      stage.classList.add('spotify-mode');
+      document.getElementById('spotify-hint').style.display = 'block';
+    } else {
+      spFrame.style.display = 'none'; spFrame.src = '';
+      stage.classList.remove('spotify-mode');
+      document.getElementById('spotify-hint').style.display = 'none';
+      ytFrame.style.display = 'block';
+      ytFrame.src = `https://www.youtube-nocookie.com/embed/${song.videoId}?autoplay=1&start=0&rel=0&modestbranding=1&_=${Date.now()}`;
+    }
+    state.nowPlaying = side;
+    document.getElementById('card-a').classList.toggle('playing', side==='a');
+    document.getElementById('card-b').classList.toggle('playing', side==='b');
+  }
+  document.getElementById('listen-a-btn').addEventListener('click', ()=>playSong('a'));
+  document.getElementById('listen-b-btn').addEventListener('click', ()=>playSong('b'));
+
+  function clearVoteTimer(){
+    if(state.voteTimerInterval){ clearInterval(state.voteTimerInterval); state.voteTimerInterval = null; }
+    document.getElementById('vote-timer').style.display = 'none';
+  }
+
+  function startVoteTimer(){
+    if(state.voteTimeLimit === null) return;
+    state.voteTimeRemaining = state.voteTimeLimit;
+    const timerEl = document.getElementById('vote-timer');
+    const numEl = document.getElementById('vote-timer-num');
+    timerEl.style.display = 'block';
+    timerEl.classList.remove('urgent');
+    numEl.textContent = state.voteTimeRemaining;
+
+    state.voteTimerInterval = setInterval(()=>{
+      state.voteTimeRemaining--;
+      numEl.textContent = Math.max(state.voteTimeRemaining, 0);
+      timerEl.classList.toggle('urgent', state.voteTimeRemaining <= 5);
+      if(state.voteTimeRemaining <= 0){
+        clearVoteTimer();
+        endVoting();
+      }
+    }, 1000);
+  }
+
+  document.getElementById('start-vote-btn').addEventListener('click', ()=>{
+    state.votingActive = true;
+    document.getElementById('vote-section').style.display = 'block';
+    document.getElementById('start-vote-row').style.display = 'none';
+
+    const isOnline = firebaseReady && state.networked && state.roomCode;
+    document.getElementById('online-vote-note').style.display = isOnline ? 'block' : 'none';
+    document.getElementById('vote-a-btn').style.display = isOnline ? 'none' : 'block';
+    document.getElementById('vote-b-btn').style.display = isOnline ? 'none' : 'block';
+
+    if(isOnline){
+      db.ref('rooms/'+state.roomCode).update({ votingActive: true });
+    }
+    startVoteTimer();
+  });
+
+  document.getElementById('vote-a-btn').addEventListener('click', ()=>{
+    state.localTapsA++; updateVoteDisplay();
+  });
+  document.getElementById('vote-b-btn').addEventListener('click', ()=>{
+    state.localTapsB++; updateVoteDisplay();
+  });
+  document.getElementById('vote-reset-btn').addEventListener('click', ()=>{
+    state.localTapsA = 0; state.localTapsB = 0;
+    if(firebaseReady && state.networked && state.roomCode){
+      db.ref('rooms/'+state.roomCode+'/remoteVotes').set(null);
+      // Nudge matchKey so participants whose device already thinks "voted" can vote again.
+      state.matchKey = state.matchKey + '-r' + Date.now();
+      db.ref('rooms/'+state.roomCode).update({ matchKey: state.matchKey });
+    }
+    state.remoteVotesSnapshot = { a: 0, b: 0 };
+    updateVoteDisplay();
+  });
+
+  function endVoting(){
+    if(state.decided) return;
+    clearVoteTimer();
+    document.getElementById('vote-section').style.display = 'none';
+    if(firebaseReady && state.networked && state.roomCode){
+      db.ref('rooms/'+state.roomCode).update({ votingActive: false });
+    }
+    if(state.votesA === state.votesB){
+      showTiebreak();
+    } else {
+      const match = currentMatchup();
+      const winner = state.votesA > state.votesB ? match.songA : match.songB;
+      finalizeMatch(winner);
+    }
+  }
+  document.getElementById('vote-end-btn').addEventListener('click', endVoting);
+
+  function showTiebreak(){
+    const match = currentMatchup();
+    document.getElementById('tiebreak-score').textContent =
+      `${state.votesA} : ${state.votesB} — Macht Schere, Stein, Papier. Wer gewinnt?`;
+    document.getElementById('tiebreak-a-btn').textContent = `🎵 ${songLabel(match.songA)} gewinnt`;
+    document.getElementById('tiebreak-b-btn').textContent = `🎵 ${songLabel(match.songB)} gewinnt`;
+    document.getElementById('tiebreak-box').style.display = 'block';
+  }
+  document.getElementById('tiebreak-a-btn').addEventListener('click', ()=>{
+    finalizeMatch(currentMatchup().songA);
+  });
+  document.getElementById('tiebreak-b-btn').addEventListener('click', ()=>{
+    finalizeMatch(currentMatchup().songB);
+  });
+
+  function finalizeMatch(winnerSong){
+    if(state.decided) return;
+    state.decided = true;
+    const match = currentMatchup();
+
+    document.getElementById('tiebreak-box').style.display = 'none';
+    document.getElementById('winner-name').textContent = songLabel(winnerSong);
+    document.getElementById('winner-banner').style.display = 'block';
+    document.getElementById('next-row').style.display = 'flex';
+
+    state.history.push({
+      roundName: roundName(state.currentRound),
+      songA: match.songA, songB: match.songB,
+      votesA: state.votesA, votesB: state.votesB,
+      winner: winnerSong
+    });
+    state.results[state.currentRound].push(winnerSong);
+    renderBracketTree('bracket-tree');
+  }
+
+  function bracketSlotHtml(song, winner){
+    if(!song){
+      return `<div class="bracket-slot tbd"><div class="bracket-slot-noimg">?</div><span>Offen</span></div>`;
+    }
+    const thumb = libThumbSrc(song);
+    const decided = !!winner;
+    const isWinner = decided && winner === song;
+    const cls = decided ? (isWinner ? 'winner' : 'loser') : '';
+    return `<div class="bracket-slot ${cls}">
+      ${thumb ? `<img src="${thumb}" alt="">` : `<div class="bracket-slot-noimg">🎵</div>`}
+      <span>${escapeHtml(songLabel(song))}</span>
+    </div>`;
+  }
+  function bracketMatchHtml(songA, songB, winner, isCurrent){
+    return `<div class="bracket-match ${isCurrent ? 'current' : ''}">
+      ${bracketSlotHtml(songA, winner)}
+      ${bracketSlotHtml(songB, winner)}
+    </div>`;
+  }
+  function renderBracketTree(containerId){
+    const container = document.getElementById(containerId);
+    const box = container.closest('.history-box');
+    if(state.rounds.length === 0){ if(box) box.style.display = 'none'; return; }
+    if(box) box.style.display = 'block';
+
+    const total = totalRoundsFromSize();
+    let html = '';
+    for(let r = 0; r < total; r++){
+      html += `<div class="bracket-round"><div class="bracket-round-title">${escapeHtml(roundName(r))}</div><div class="bracket-matches">`;
+      if(r < state.rounds.length){
+        const matches = state.rounds[r];
+        const winners = state.results[r] || [];
+        matches.forEach((m, i) => {
+          const winner = winners[i];
+          const isCurrent = (r === state.currentRound && i === state.currentMatch && !winner);
+          html += bracketMatchHtml(m.songA, m.songB, winner, isCurrent);
+        });
+      } else {
+        const numMatches = Math.pow(2, total - r - 1);
+        for(let i=0;i<numMatches;i++) html += bracketMatchHtml(null, null, null, false);
+      }
+      html += `</div></div>`;
+    }
+    container.innerHTML = html;
+  }
+
+  document.getElementById('next-match-btn').addEventListener('click', ()=>{
+    state.currentMatch++;
+    if(state.currentMatch >= state.rounds[state.currentRound].length){
+      const winners = state.results[state.currentRound];
+      if(winners.length === 1){
+        endTournament(winners[0]);
+        return;
+      }
+      const nextRound = [];
+      for(let i=0;i<winners.length;i+=2) nextRound.push({ songA: winners[i], songB: winners[i+1] });
+      state.rounds.push(nextRound);
+      state.results.push([]);
+      state.currentRound++;
+      state.currentMatch = 0;
+    }
+    showMatch();
+  });
+
+  function endTournament(champion){
+    const key = hofKey(champion);
+    if(!state.hallOfFame[key]) state.hallOfFame[key] = { artist: champion.artist, title: champion.title, wins: 0 };
+    state.hallOfFame[key].wins++;
+    saveHof();
+
+    document.getElementById('champion-artist').textContent = champion.artist;
+    document.getElementById('champion-title').textContent = champion.title || '';
+
+    renderBracketTree('end-bracket-tree');
+
+    if(firebaseReady && state.networked && state.roomCode){
+      db.ref('rooms/'+state.roomCode).update({
+        status: 'ended',
+        championArtist: champion.artist,
+        championTitle: champion.title || ''
+      });
+    }
+
+    showScreen('end');
+  }
+
+  document.getElementById('new-tournament-btn').addEventListener('click', beginTournament);
+
+  document.getElementById('edit-lib-btn').addEventListener('click', ()=>{
+    if(firebaseReady && state.networked && state.roomCode){
+      db.ref('rooms/'+state.roomCode).update({ status: 'setup', songA: null, songB: null });
+    }
+    showScreen('library');
+  });
+
+  loadState();
+})();
+</script>
+
+<script>
+  // Registers the service worker so the app can be added to the home screen
+  // and its shell (UI, not the streamed songs) keeps working offline.
+  // This only succeeds when the file is served over http(s) — e.g. via
+  // GitHub Pages — not when opened directly as a local file.
+  if('serviceWorker' in navigator){
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('sw.js').catch(() => {
+        // Silently ignore — app still works fully without it (e.g. local file).
+      });
+    });
+  }
+</script>
+</body>
+</html>
