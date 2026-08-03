@@ -760,7 +760,18 @@
       { artist:'Linkin Park', title:'In the End', videoId:'oIwWqYSbzGA', spotifyId:null, spotifyThumb:null, categories:['Linkin Park'] },
       { artist:'Linkin Park', title:'Numb', videoId:'8Jwj_lpwnZk', spotifyId:null, spotifyThumb:null, categories:['Linkin Park'] },
       { artist:'Linkin Park', title:"What I've Done", videoId:'pMePM9Q-bYk', spotifyId:null, spotifyThumb:null, categories:['Linkin Park'] },
-      { artist:'Linkin Park', title:'Faint', videoId:'LYU-8IFcDPw', spotifyId:null, spotifyThumb:null, categories:['Linkin Park'] }
+      { artist:'Linkin Park', title:'Faint', videoId:'LYU-8IFcDPw', spotifyId:null, spotifyThumb:null, categories:['Linkin Park'] },
+      { artist:'Linkin Park', title:'Crawling', videoId:'Gd9OhYroLN0', spotifyId:null, spotifyThumb:null, categories:['Linkin Park'] },
+      { artist:'Linkin Park', title:'Somewhere I Belong', videoId:'zsCD5XCu6CM', spotifyId:null, spotifyThumb:null, categories:['Linkin Park'] },
+      { artist:'Linkin Park', title:'The Catalyst', videoId:'51iquRYKPbs', spotifyId:null, spotifyThumb:null, categories:['Linkin Park'] },
+      { artist:'Linkin Park', title:'Papercut', videoId:'vjVkXlxsO8Q', spotifyId:null, spotifyThumb:null, categories:['Linkin Park'] },
+      { artist:'Linkin Park', title:'Breaking the Habit', videoId:'v2H4l9RpkwM', spotifyId:null, spotifyThumb:null, categories:['Linkin Park'] },
+      { artist:'Linkin Park', title:'Bleed It Out', videoId:'jmSIGT31_-c', spotifyId:null, spotifyThumb:null, categories:['Linkin Park'] },
+      { artist:'Linkin Park', title:'One Step Closer', videoId:'pmUTBDuUGz8', spotifyId:null, spotifyThumb:null, categories:['Linkin Park'] },
+      { artist:'Linkin Park', title:'Shadow of the Day', videoId:'3g8v45du-ZA', spotifyId:null, spotifyThumb:null, categories:['Linkin Park'] },
+      { artist:'Linkin Park', title:'New Divide', videoId:'ysSxxIqKNN0', spotifyId:null, spotifyThumb:null, categories:['Linkin Park'] },
+      { artist:'Linkin Park', title:'Waiting for the End', videoId:'5qF_qbaWt3Q', spotifyId:null, spotifyThumb:null, categories:['Linkin Park'] },
+      { artist:'Linkin Park', title:'Given Up', videoId:'7y5NJgyEGcM', spotifyId:null, spotifyThumb:null, categories:['Linkin Park'] }
     ]
   };
 
@@ -808,17 +819,40 @@
     if(item.spotifyThumb === undefined) item.spotifyThumb = null;
     return item;
   }
-  function loadState(){
+  async function loadState(){
     try{
       const raw = localStorage.getItem(KEY_LIBRARY);
       state.library = raw ? JSON.parse(raw) : SEED_LIBRARY.slice();
-      if(!raw) saveLibrary();
     }catch(e){
       state.library = SEED_LIBRARY.slice();
-      saveLibrary();
     }
     state.library = state.library.map(migrateLibraryEntry);
+
+    // If Firebase is set up, the cloud copy is the shared source of truth —
+    // this is what makes the library the same on every device, not just this one.
+    if(firebaseReady){
+      try{
+        const snap = await db.ref('library/songs').once('value');
+        const cloudLibrary = snap.val();
+        if(cloudLibrary && cloudLibrary.length > 0){
+          state.library = cloudLibrary.map(migrateLibraryEntry);
+        } else if(state.library.length > 0){
+          // Nothing in the cloud yet — seed it with whatever's already on this device.
+          await db.ref('library/songs').set(state.library);
+        }
+        db.ref('library/songs').on('value', (snap2)=>{
+          const val = snap2.val();
+          if(val){
+            state.library = val.map(migrateLibraryEntry);
+            renderLibraryList();
+            refreshFilterAndSizes();
+          }
+        });
+      }catch(e){ /* stay with the local copy if the cloud read fails */ }
+    }
+
     saveLibrary();
+
     try{
       const raw = localStorage.getItem(KEY_HOF);
       if(raw) state.hallOfFame = JSON.parse(raw);
@@ -826,19 +860,26 @@
 
     try{
       const raw = localStorage.getItem(KEY_TEMPLATES);
-      state.templates = raw ? JSON.parse(raw) : Object.assign({}, SEED_TEMPLATES);
-      if(!raw) saveTemplates();
+      state.templates = raw ? JSON.parse(raw) : {};
     }catch(e){
-      state.templates = Object.assign({}, SEED_TEMPLATES);
-      saveTemplates();
+      state.templates = {};
     }
+    // Built-in templates always reflect the latest version shipped in the app,
+    // custom templates the user saved themselves are left untouched.
+    Object.keys(SEED_TEMPLATES).forEach(name=>{ state.templates[name] = SEED_TEMPLATES[name]; });
+    saveTemplates();
 
     renderLibraryList();
     refreshFilterAndSizes();
 
     goToTournamentHome();
   }
-  function saveLibrary(){ try{ localStorage.setItem(KEY_LIBRARY, JSON.stringify(state.library)); }catch(e){} }
+  function saveLibrary(){
+    try{ localStorage.setItem(KEY_LIBRARY, JSON.stringify(state.library)); }catch(e){}
+    if(firebaseReady){
+      try{ db.ref('library/songs').set(state.library); }catch(e){}
+    }
+  }
   function saveHof(){ try{ localStorage.setItem(KEY_HOF, JSON.stringify(state.hallOfFame)); }catch(e){} }
   function saveTemplates(){ try{ localStorage.setItem(KEY_TEMPLATES, JSON.stringify(state.templates)); }catch(e){} }
 
